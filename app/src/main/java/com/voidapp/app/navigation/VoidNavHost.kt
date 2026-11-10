@@ -1,26 +1,19 @@
 package com.voidapp.app.navigation
 
 import android.net.Uri
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.List
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.List
-import androidx.compose.material.icons.outlined.Settings
-import androidx.compose.ui.unit.dp
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -30,6 +23,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.voidapp.feature.auth.LoginScreen
 import com.voidapp.feature.repos.ReposScreen
+import com.voidapp.feature.settings.SettingsScreen
 import com.voidapp.feature.workspace.WorkspaceScreen
 
 private const val ROUTE_ONBOARDING = "onboarding"
@@ -89,6 +83,7 @@ fun VoidNavHost() {
                     },
                 )
             }
+
             composable(ROUTE_REPOS) {
                 ReposScreen(
                     onOpenRepo = { repo ->
@@ -99,6 +94,7 @@ fun VoidNavHost() {
                     },
                 )
             }
+
             composable(
                 route = ROUTE_WORKSPACE,
                 arguments = listOf(
@@ -112,25 +108,19 @@ fun VoidNavHost() {
             ) {
                 WorkspaceScreen(onExit = { navController.popBackStack() })
             }
+
             composable(ROUTE_SETTINGS) {
-                Placeholder("Settings", "Provider keys, default model and theme.")
+                SettingsScreen(
+                    onLoggedOut = {
+                        navController.navigate(ROUTE_ONBOARDING) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                inclusive = true
+                            }
+                            launchSingleTop = true
+                        }
+                    },
+                )
             }
         }
-    }
-}
-
-@Composable
-private fun Placeholder(title: String, body: String) {
-    Column(
-        modifier = Modifier.fillMaxSize().padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Text(text = title, style = MaterialTheme.typography.titleLarge)
-        Text(
-            text = body,
-            style = MaterialTheme.typography.bodyMedium,
-            textAlign = TextAlign.Center,
-        )
     }
 }

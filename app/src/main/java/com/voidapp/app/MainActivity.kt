@@ -5,8 +5,7 @@ import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import com.voidapp.app.navigation.VoidNavHost
-import com.voidapp.designsystem.theme.VoidTheme
+import com.voidapp.app.ui.VoidRoot
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -20,9 +19,7 @@ class MainActivity : ComponentActivity() {
         )
         enableEdgeToEdge()
         setContent {
-            VoidTheme {
-                VoidNavHost()
-            }
+            VoidRoot()
         }
     }
 }

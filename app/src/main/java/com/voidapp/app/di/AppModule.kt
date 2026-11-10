@@ -15,6 +15,8 @@ import com.voidapp.core.git.CloneManager
 import com.voidapp.core.security.EncryptedSecretStore
 import com.voidapp.core.security.SecretStore
 import com.voidapp.core.workspace.WorkspaceManager
+import com.voidapp.feature.settings.DataStoreSettingsStore
+import com.voidapp.feature.settings.SettingsStore
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -23,6 +25,9 @@ import dagger.hilt.components.SingletonComponent
 import io.ktor.client.HttpClient
 import java.io.File
 import javax.inject.Singleton
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -74,4 +79,9 @@ object AppModule {
     @Provides
     @Singleton
     fun provideCloneManager(root: File): CloneManager = CloneManager(root)
+
+    @Provides
+    @Singleton
+    fun provideSettingsStore(@ApplicationContext context: Context): SettingsStore =
+        DataStoreSettingsStore(context, CoroutineScope(SupervisorJob() + Dispatchers.IO))
 }
