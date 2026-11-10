@@ -9,6 +9,7 @@ import com.voidapp.core.common.github.KtorGitHubAuthApi
 import com.voidapp.core.common.github.KtorGitHubApi
 import com.voidapp.core.common.network.NetworkModule
 import com.voidapp.core.common.network.PinConfig
+import com.voidapp.core.database.ChatDao
 import com.voidapp.core.database.RepoDao
 import com.voidapp.core.database.VoidDatabase
 import com.voidapp.core.git.CloneManager
@@ -70,6 +71,9 @@ object AppModule {
 
     @Provides
     fun provideRepoDao(database: VoidDatabase): RepoDao = database.repoDao()
+
+    @Provides
+    fun provideChatDao(database: VoidDatabase): ChatDao = database.chatDao()
 
     @Provides
     @Singleton

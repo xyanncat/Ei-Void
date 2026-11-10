@@ -32,6 +32,7 @@ include(
     ":core:ai",
     ":core:agent",
     ":feature:auth",
+    ":feature:chat",
     ":feature:repos",
     ":feature:workspace",
     ":feature:settings",
