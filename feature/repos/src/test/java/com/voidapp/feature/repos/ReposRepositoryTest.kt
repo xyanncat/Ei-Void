@@ -116,6 +116,24 @@ class ReposRepositoryTest {
             calls++
             return if (page == 1) repos else emptyList()
         }
+
+        override suspend fun createRepo(
+            name: String,
+            description: String?,
+            isPrivate: Boolean,
+        ): Repo = Repo(
+            id = "new",
+            owner = "owner",
+            name = name,
+            fullName = "owner/$name",
+            isPrivate = isPrivate,
+            defaultBranch = "main",
+            description = description,
+            updatedAt = 0L,
+        )
+
+        override suspend fun repoInfo(fullName: String): Repo =
+            repos.first { it.fullName == fullName }
     }
 
     private class FakeDao(initial: List<Repo> = emptyList()) : RepoDao {

@@ -158,5 +158,23 @@ class FoundationIntegrationTest {
     private class FakeGitHubApi(private val repos: List<Repo>) : GitHubApi {
         override suspend fun listRepos(page: Int): List<Repo> =
             if (page == 1) repos else emptyList()
+
+        override suspend fun createRepo(
+            name: String,
+            description: String?,
+            isPrivate: Boolean,
+        ): Repo = Repo(
+            id = "new",
+            owner = "owner",
+            name = name,
+            fullName = "owner/$name",
+            isPrivate = isPrivate,
+            defaultBranch = "main",
+            description = description,
+            updatedAt = 0L,
+        )
+
+        override suspend fun repoInfo(fullName: String): Repo =
+            repos.first { it.fullName == fullName }
     }
 }

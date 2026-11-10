@@ -6,9 +6,15 @@ import io.ktor.client.call.body
 import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.get
 import io.ktor.client.request.parameter
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.http.ContentType
+import io.ktor.http.contentType
 import java.time.Instant
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 
 /** A repository as Void sees it. */
 data class Repo(
@@ -25,6 +31,16 @@ data class Repo(
 interface GitHubApi {
     /** One page of the authenticated user's repositories, newest update first. */
     suspend fun listRepos(page: Int): List<Repo>
+
+    /** Creates a repository for the authenticated user. */
+    suspend fun createRepo(
+        name: String,
+        description: String?,
+        isPrivate: Boolean,
+    ): Repo
+
+    /** Metadata of one repository, by `owner/name`. */
+    suspend fun repoInfo(fullName: String): Repo
 }
 
 class KtorGitHubApi(
@@ -45,6 +61,40 @@ class KtorGitHubApi(
         }.body()
 
         return response.map { it.toRepo() }
+    }
+
+    override suspend fun createRepo(
+        name: String,
+        description: String?,
+        isPrivate: Boolean,
+    ): Repo {
+        val token = secretStore.getToken()
+            ?: error("Not signed in to GitHub")
+
+        val response: RepoDto = client.post("$BASE_URL/user/repos") {
+            bearerAuth(token)
+            contentType(ContentType.Application.Json)
+            setBody(
+                buildJsonObject {
+                    put("name", name)
+                    put("private", isPrivate)
+                    description?.let { put("description", it) }
+                },
+            )
+        }.body()
+
+        return response.toRepo()
+    }
+
+    override suspend fun repoInfo(fullName: String): Repo {
+        val token = secretStore.getToken()
+            ?: error("Not signed in to GitHub")
+
+        val response: RepoDto = client.get("$BASE_URL/repos/$fullName") {
+            bearerAuth(token)
+        }.body()
+
+        return response.toRepo()
     }
 
     private companion object {
