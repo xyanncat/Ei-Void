@@ -30,6 +30,7 @@ include(
     ":core:git",
     ":core:workspace",
     ":core:ai",
+    ":core:agent",
     ":feature:auth",
     ":feature:repos",
     ":feature:workspace",
