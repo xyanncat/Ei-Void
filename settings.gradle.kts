@@ -29,6 +29,7 @@ include(
     ":core:database",
     ":core:git",
     ":core:workspace",
+    ":core:ai",
     ":feature:auth",
     ":feature:repos",
     ":feature:workspace",
