@@ -13,6 +13,7 @@ import com.voidapp.core.database.RepoDao
 import com.voidapp.core.database.VoidDatabase
 import com.voidapp.core.git.CloneManager
 import com.voidapp.core.git.GitClient
+import com.voidapp.core.git.RepoLocks
 import com.voidapp.core.security.EncryptedSecretStore
 import com.voidapp.core.security.SecretStore
 import com.voidapp.core.workspace.WorkspaceManager
@@ -81,11 +82,16 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideCloneManager(root: File): CloneManager = CloneManager(root)
+    fun provideRepoLocks(): RepoLocks = RepoLocks()
 
     @Provides
     @Singleton
-    fun provideGitClient(): GitClient = GitClient()
+    fun provideCloneManager(root: File, locks: RepoLocks): CloneManager =
+        CloneManager(root, locks = locks)
+
+    @Provides
+    @Singleton
+    fun provideGitClient(locks: RepoLocks): GitClient = GitClient(locks)
 
     /**
      * Application scoped coroutine scope. Work that must outlive a screen

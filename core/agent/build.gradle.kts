@@ -37,4 +37,6 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(libs.coroutines.test)
+    // The git tools are tested against a real local remote.
+    testImplementation(libs.jgit)
 }

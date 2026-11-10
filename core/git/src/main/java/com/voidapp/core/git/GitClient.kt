@@ -1,13 +1,18 @@
 package com.voidapp.core.git
 
+import com.voidapp.core.workspace.DiffEngine
 import com.voidapp.core.workspace.GitResult
 import com.voidapp.core.workspace.Workspace
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.eclipse.jgit.api.Git
+import org.eclipse.jgit.lib.AnyObjectId
 import org.eclipse.jgit.lib.Repository
+import org.eclipse.jgit.revwalk.RevWalk
+import org.eclipse.jgit.treewalk.TreeWalk
 import org.eclipse.jgit.transport.RemoteRefUpdate
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider
+import java.io.File
 
 data class GitStatus(
     /** Changed in the working tree but not staged. */
@@ -117,6 +122,66 @@ class GitClient(
                 }
             }
         }
+
+    /**
+     * A unified diff of the workspace against HEAD. [path] limits the diff
+     * to one file.
+     *
+     * The diff is built from the committed content and the file on disk, so
+     * uncommitted work is included and nothing has to be written to the
+     * object database first.
+     */
+    suspend fun diff(workspace: Workspace, path: String? = null): String =
+        withContext(Dispatchers.IO) {
+            locks.withLock(workspace.key) {
+                Git.open(workspace.path).use { git ->
+                    val status = git.status().call()
+                    val changed = (
+                        status.modified + status.missing + status.changed +
+                            status.added + status.removed
+                        ).distinct()
+                        .filter { path == null || it == path }
+                        .sorted()
+
+                    val head = git.repository.resolve("HEAD^{commit}")
+                    val diff = StringBuilder()
+
+                    for (file in changed) {
+                        val oldText = head?.let { readCommittedText(git, it, file) }.orEmpty()
+                        val newText = if (status.missing.contains(file)) {
+                            ""
+                        } else {
+                            readWorkTreeText(git, file) ?: continue
+                        }
+                        if (oldText == newText) continue
+
+                        diff.append(DiffEngine.unifiedDiff(oldText, newText, file))
+                        diff.append('\n')
+                    }
+
+                    diff.toString()
+                }
+            }
+        }
+
+    /** The content of [file] as of the given commit, or null when it is new. */
+    private fun readCommittedText(git: Git, commitId: AnyObjectId, file: String): String? =
+        runCatching {
+            val walk = RevWalk(git.repository)
+            val commit = walk.parseCommit(commitId)
+            val finder = TreeWalk.forPath(git.repository, file, commit.tree)
+                ?: return@runCatching null
+            val blob = git.repository.open(finder.getObjectId(0))
+            blob.bytes.toString(Charsets.UTF_8)
+        }.getOrNull()
+
+    /** The content of [file] on disk, or null when it cannot be read as text. */
+    private fun readWorkTreeText(git: Git, file: String): String? = runCatching {
+        val workTree = git.repository.workTree ?: return@runCatching null
+        val target = File(workTree, file)
+        if (!target.isFile) return null
+        target.readText()
+    }.getOrNull()
 
     suspend fun log(workspace: Workspace, limit: Int = 30): List<Commit> =
         withContext(Dispatchers.IO) {

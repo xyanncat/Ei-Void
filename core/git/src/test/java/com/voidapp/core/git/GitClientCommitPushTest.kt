@@ -99,6 +99,32 @@ class GitClientCommitPushTest {
     }
 
     @Test
+    fun `diff shows the change against HEAD`() = runTest {
+        File(workspace.path, "README.md").appendText("more\n")
+
+        val diff = client.diff(workspace)
+
+        assertTrue(diff.contains("README.md"))
+        assertTrue(diff.contains("+more"))
+    }
+
+    @Test
+    fun `diff can be limited to one file`() = runTest {
+        File(workspace.path, "README.md").appendText("more\n")
+        File(workspace.path, "other.txt").writeText("other\n")
+
+        val diff = client.diff(workspace, "README.md")
+
+        assertTrue(diff.contains("README.md"))
+        assertFalse(diff.contains("other.txt"))
+    }
+
+    @Test
+    fun `diff is empty for an unchanged workspace`() = runTest {
+        assertTrue(client.diff(workspace).isBlank())
+    }
+
+    @Test
     fun `log returns the latest commit first`() = runTest {
         File(workspace.path, "new.txt").writeText("hello")
         client.commit(workspace, "add new.txt")
