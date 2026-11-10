@@ -6,6 +6,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -21,21 +22,22 @@ class SecretStoreEncryptionTest {
 
     @After
     fun tearDown() {
-        SecretStore(context).clearAll()
+        EncryptedSecretStore(context).clearAll()
     }
 
     @Test
     fun tokenIsNotStoredAsPlaintext() {
-        val store = SecretStore(context)
+        val store = EncryptedSecretStore(context)
         store.clearAll()
         store.saveToken("gho_secret123")
 
         val raw = context
-            .getSharedPreferences(SecretStore.PREFS_NAME, Context.MODE_PRIVATE)
+            .getSharedPreferences(EncryptedSecretStore.PREFS_NAME, Context.MODE_PRIVATE)
             .all
             .values
             .joinToString()
 
+        assertTrue("the prefs file must not be empty after a write", raw.isNotEmpty())
         assertFalse("token must not appear in the prefs file", raw.contains("gho_secret123"))
         assertEquals("gho_secret123", store.getToken())
     }

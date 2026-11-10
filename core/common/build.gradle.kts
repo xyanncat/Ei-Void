@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -26,11 +27,13 @@ android {
 }
 
 dependencies {
+    // Part of this module's public API (NetworkModule returns these types).
+    api(libs.okhttp)
+    api(libs.ktor.client.core)
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.coroutines.core)
     implementation(libs.coroutines.android)
-    implementation(libs.okhttp)
-    implementation(libs.ktor.client.core)
     implementation(libs.ktor.client.okhttp)
     implementation(libs.ktor.client.content.negotiation)
     implementation(libs.ktor.serialization.json)

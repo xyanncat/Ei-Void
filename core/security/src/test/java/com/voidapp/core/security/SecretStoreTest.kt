@@ -22,7 +22,9 @@ class SecretStoreTest {
     @Before
     fun setUp() {
         val context = ApplicationProvider.getApplicationContext<Context>()
-        store = SecretStore(context.getSharedPreferences("secret_store_test", Context.MODE_PRIVATE))
+        store = EncryptedSecretStore.forTest(
+            context.getSharedPreferences("secret_store_test", Context.MODE_PRIVATE),
+        )
         store.clearAll()
     }
 

@@ -17,13 +17,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.List
+import androidx.compose.material.icons.automirrored.outlined.List
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.voidapp.feature.auth.LoginScreen
 import androidx.navigation.compose.rememberNavController
 
 private const val ROUTE_ONBOARDING = "onboarding"
@@ -39,7 +40,7 @@ fun VoidNavHost() {
     val currentRoute = backStackEntry?.destination?.route
 
     val destinations = listOf(
-        Destination(ROUTE_REPOS, "Repos", Icons.Outlined.List),
+        Destination(ROUTE_REPOS, "Repos", Icons.AutoMirrored.Outlined.List),
         Destination(ROUTE_SETTINGS, "Settings", Icons.Outlined.Settings),
     )
 
@@ -73,9 +74,13 @@ fun VoidNavHost() {
             modifier = Modifier.padding(innerPadding),
         ) {
             composable(ROUTE_ONBOARDING) {
-                Placeholder(
-                    title = "Ei | Void",
-                    body = "An AI coding agent that works on your repositories, on your phone.",
+                LoginScreen(
+                    onLoggedIn = {
+                        navController.navigate(ROUTE_REPOS) {
+                            popUpTo(ROUTE_ONBOARDING) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    },
                 )
             }
             composable(ROUTE_REPOS) {
