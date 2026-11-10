@@ -66,6 +66,26 @@ class WorkspaceManager(private val root: File) {
         )
     }
 
+    /** True when the path exists inside the workspace. */
+    suspend fun exists(workspace: Workspace, path: String): Boolean =
+        withContext(Dispatchers.IO) {
+            runCatching { resolve(workspace, path).exists() }.getOrDefault(false)
+        }
+
+    /**
+     * The raw text of a file, exactly as stored, so an edit does not change
+     * the line endings or lose the trailing newline.
+     */
+    suspend fun readText(workspace: Workspace, path: String): String =
+        withContext(Dispatchers.IO) {
+            val file = resolve(workspace, path)
+            require(file.isFile) { "Not a file: $path" }
+            require(file.length() <= MAX_EDIT_BYTES) {
+                "$path is too large to edit (${file.length()} bytes)"
+            }
+            file.readText()
+        }
+
     suspend fun writeFile(
         workspace: Workspace,
         path: String,
@@ -125,6 +145,7 @@ class WorkspaceManager(private val root: File) {
 
     companion object {
         const val WORKSPACE_LINE_CAP = 500
+        const val MAX_EDIT_BYTES = 1_048_576L
         private const val GIT_DIR = ".git"
     }
 }
