@@ -11,14 +11,17 @@ import com.voidapp.core.common.network.NetworkModule
 import com.voidapp.core.common.network.PinConfig
 import com.voidapp.core.database.RepoDao
 import com.voidapp.core.database.VoidDatabase
+import com.voidapp.core.git.CloneManager
 import com.voidapp.core.security.EncryptedSecretStore
 import com.voidapp.core.security.SecretStore
+import com.voidapp.core.workspace.WorkspaceManager
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import io.ktor.client.HttpClient
+import java.io.File
 import javax.inject.Singleton
 
 @Module
@@ -58,4 +61,17 @@ object AppModule {
 
     @Provides
     fun provideRepoDao(database: VoidDatabase): RepoDao = database.repoDao()
+
+    @Provides
+    @Singleton
+    fun provideWorkspaceRoot(@ApplicationContext context: Context): File =
+        File(context.filesDir, "void/workspaces")
+
+    @Provides
+    @Singleton
+    fun provideWorkspaceManager(root: File): WorkspaceManager = WorkspaceManager(root)
+
+    @Provides
+    @Singleton
+    fun provideCloneManager(root: File): CloneManager = CloneManager(root)
 }

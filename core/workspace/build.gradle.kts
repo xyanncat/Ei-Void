@@ -22,6 +22,8 @@ android {
 }
 
 dependencies {
+    api(project(":core:common"))
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.coroutines.core)
     implementation(libs.coroutines.android)

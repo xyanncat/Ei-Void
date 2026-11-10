@@ -1,5 +1,6 @@
 package com.voidapp.app.navigation
 
+import android.net.Uri
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -21,17 +22,20 @@ import androidx.compose.material.icons.automirrored.outlined.List
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.voidapp.feature.auth.LoginScreen
 import com.voidapp.feature.repos.ReposScreen
-import androidx.navigation.compose.rememberNavController
+import com.voidapp.feature.workspace.WorkspaceScreen
 
 private const val ROUTE_ONBOARDING = "onboarding"
 private const val ROUTE_REPOS = "repos"
 private const val ROUTE_SETTINGS = "settings"
-private const val ROUTE_WORKSPACE = "workspace/{owner}/{name}"
+private const val ROUTE_WORKSPACE = "workspace/{owner}/{name}/{branch}"
 
 private data class Destination(val route: String, val label: String, val icon: ImageVector)
 
@@ -88,17 +92,25 @@ fun VoidNavHost() {
             composable(ROUTE_REPOS) {
                 ReposScreen(
                     onOpenRepo = { repo ->
-                        navController.navigate("workspace/${repo.owner}/${repo.name}")
+                        navController.navigate(
+                            "workspace/${Uri.encode(repo.owner)}/" +
+                                "${Uri.encode(repo.name)}/${Uri.encode(repo.defaultBranch)}",
+                        )
                     },
                 )
             }
-            composable(ROUTE_WORKSPACE) { entry ->
-                val owner = entry.arguments?.getString("owner").orEmpty()
-                val name = entry.arguments?.getString("name").orEmpty()
-                Placeholder(
-                    title = "$owner/$name",
-                    body = "Opening this repository's workspace…",
-                )
+            composable(
+                route = ROUTE_WORKSPACE,
+                arguments = listOf(
+                    navArgument("owner") { type = NavType.StringType },
+                    navArgument("name") { type = NavType.StringType },
+                    navArgument("branch") {
+                        type = NavType.StringType
+                        defaultValue = "main"
+                    },
+                ),
+            ) {
+                WorkspaceScreen(onExit = { navController.popBackStack() })
             }
             composable(ROUTE_SETTINGS) {
                 Placeholder("Settings", "Provider keys, default model and theme.")
