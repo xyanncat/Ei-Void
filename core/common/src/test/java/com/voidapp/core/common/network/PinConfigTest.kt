@@ -2,7 +2,6 @@ package com.voidapp.core.common.network
 
 import java.util.Base64
 import okhttp3.ConnectionSpec
-import okhttp3.Request
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -33,23 +32,11 @@ class PinConfigTest {
     }
 
     @Test
-    fun `cleartext is not an allowed connection spec`() {
+    fun `connection specs exclude cleartext`() {
         val client = NetworkModule.provideOkHttpClient(emptyList())
 
         assertTrue(client.connectionSpecs.isNotEmpty())
         assertFalse(client.connectionSpecs.contains(ConnectionSpec.CLEARTEXT))
-    }
-
-    @Test
-    fun `an http url is not reachable through the pinned client`() {
-        val client = NetworkModule.provideOkHttpClient(
-            listOf(PinConfig("api.github.com", listOf(zeroPin))),
-        )
-
-        val cleartextRequest = Request.Builder().url("http://api.github.com/user").build()
-
-        // Building the request is fine; the connection specs are what forbid cleartext.
-        assertEquals("http", cleartextRequest.url.scheme)
-        assertFalse(client.connectionSpecs.contains(ConnectionSpec.CLEARTEXT))
+        assertTrue(client.connectionSpecs.contains(ConnectionSpec.MODERN_TLS))
     }
 }

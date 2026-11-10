@@ -32,6 +32,7 @@ class AuthRepository @Inject constructor(
     fun isLoggedIn(): Boolean = !secretStore.getToken().isNullOrBlank()
 
     fun logout() {
-        secretStore.clearToken()
+        // Spec: every secret is cleared on logout.
+        secretStore.clearAll()
     }
 }

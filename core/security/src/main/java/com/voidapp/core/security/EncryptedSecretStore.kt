@@ -40,7 +40,14 @@ class EncryptedSecretStore private constructor(
     }
 
     override fun clearAll() {
-        prefs.edit().clear().commit()
+        // Only credential keys are removed: a future database passphrase must
+        // survive logout, or the encrypted database becomes unreadable.
+        val editor = prefs.edit()
+        editor.remove(KEY_TOKEN)
+        prefs.all.keys
+            .filter { it.startsWith(PROVIDER_KEY_PREFIX) }
+            .forEach { editor.remove(it) }
+        editor.commit()
     }
 
     private fun providerKey(providerId: String) = "$PROVIDER_KEY_PREFIX$providerId"
