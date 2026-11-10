@@ -1,6 +1,8 @@
 package com.voidapp.core.workspace
 
 import java.io.File
+import java.nio.file.Files
+import java.nio.file.LinkOption
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -11,7 +13,7 @@ import kotlinx.coroutines.withContext
 class WorkspaceManager(private val root: File) {
 
     fun workspaceFor(repo: com.voidapp.core.common.github.Repo): Workspace =
-        Workspace(File(File(root, repo.owner), repo.name), repo)
+        Workspace(workspacePath(root, repo), repo)
 
     suspend fun listFiles(workspace: Workspace, path: String = "."): List<FileInfo> =
         withContext(Dispatchers.IO) {
@@ -83,13 +85,21 @@ class WorkspaceManager(private val root: File) {
         withContext(Dispatchers.IO) {
             runCatching {
                 val file = resolve(workspace, path)
-                require(file.exists()) { "No such file: $path" }
-                require(file.deleteRecursively()) { "Could not delete $path" }
+                require(Files.exists(file.toPath(), LinkOption.NOFOLLOW_LINKS)) {
+                    "No such file: $path"
+                }
+                require(file.deleteWithoutFollowingLinks()) { "Could not delete $path" }
                 GitResult.Success(workspace)
             }.getOrElse { error ->
                 GitResult.Failure(error.message ?: "Could not delete $path")
             }
         }
+
+    /** Removes every workspace. Used when signing out. */
+    suspend fun deleteAll() = withContext(Dispatchers.IO) {
+        root.listFiles()?.forEach { it.deleteWithoutFollowingLinks() }
+        Unit
+    }
 
     /** Canonicalises [path] and refuses anything outside [workspace]. */
     private fun resolve(workspace: Workspace, path: String): File {
@@ -98,6 +108,19 @@ class WorkspaceManager(private val root: File) {
         val inside = target == base || target.path.startsWith(base.path + File.separator)
         require(inside) { "Path escapes the workspace: $path" }
         return target
+    }
+
+    /**
+     * Deletes a tree without ever following a symlink: a link is removed
+     * itself, so a checkout containing `evil -> ../../` cannot reach files
+     * outside the workspace.
+     */
+    private fun File.deleteWithoutFollowingLinks(): Boolean {
+        if (Files.isSymbolicLink(toPath()) || !isDirectory) return delete()
+        listFiles()?.forEach { child ->
+            if (!child.deleteWithoutFollowingLinks()) return false
+        }
+        return delete()
     }
 
     companion object {

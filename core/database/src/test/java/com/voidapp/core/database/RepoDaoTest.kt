@@ -81,6 +81,15 @@ class RepoDaoTest {
         assertTrue(dao.observeAll().first().isEmpty())
     }
 
+    @Test
+    fun `deleteNotIn removes only the repos that are gone`() = runTest {
+        dao.insertAll(listOf(repo("1", "owner", "alpha"), repo("2", "owner", "beta")))
+
+        dao.deleteNotIn(listOf("2"))
+
+        assertEquals(listOf("owner/beta"), dao.observeAll().first().map { it.fullName })
+    }
+
     private fun repo(
         id: String,
         owner: String,

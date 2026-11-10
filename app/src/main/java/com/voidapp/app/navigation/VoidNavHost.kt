@@ -14,7 +14,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -52,10 +51,10 @@ fun VoidNavHost() {
                         NavigationBarItem(
                             selected = currentRoute == destination.route,
                             onClick = {
+                                // Repos is the root of the authenticated back stack;
+                                // popping to it keeps tab switching flat and reversible.
                                 navController.navigate(destination.route) {
-                                    popUpTo(navController.graph.findStartDestination().id) {
-                                        saveState = true
-                                    }
+                                    popUpTo(ROUTE_REPOS) { saveState = true }
                                     launchSingleTop = true
                                     restoreState = true
                                 }
@@ -112,10 +111,11 @@ fun VoidNavHost() {
             composable(ROUTE_SETTINGS) {
                 SettingsScreen(
                     onLoggedOut = {
+                        // Popping to Repos (the authenticated root) drops Settings
+                        // and every other authenticated entry, so Back cannot
+                        // return to signed-in screens.
                         navController.navigate(ROUTE_ONBOARDING) {
-                            popUpTo(navController.graph.findStartDestination().id) {
-                                inclusive = true
-                            }
+                            popUpTo(ROUTE_REPOS) { inclusive = true }
                             launchSingleTop = true
                         }
                     },

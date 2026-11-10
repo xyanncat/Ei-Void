@@ -75,6 +75,37 @@ class ReposRepositoryTest {
         assertTrue(repository.observeRepos().first().isEmpty())
     }
 
+    @Test
+    fun `refresh drops repositories the account no longer has`() = runTest {
+        val dao = FakeDao()
+        val first = ReposRepository(
+            FakeGitHubApi(listOf(Repo("1", "owner", "alpha", "owner/alpha", false, "main", null, 0L))),
+            dao,
+        )
+        first.refreshRepos()
+
+        val second = ReposRepository(
+            FakeGitHubApi(listOf(Repo("2", "owner", "beta", "owner/beta", false, "main", null, 0L))),
+            dao,
+        )
+        second.refreshRepos()
+
+        assertEquals(listOf("owner/beta"), dao.observeAll().first().map { it.fullName })
+    }
+
+    @Test
+    fun `an empty account clears the cache`() = runTest {
+        val dao = FakeDao()
+        ReposRepository(
+            FakeGitHubApi(listOf(Repo("1", "owner", "alpha", "owner/alpha", false, "main", null, 0L))),
+            dao,
+        ).refreshRepos()
+
+        ReposRepository(FakeGitHubApi(), dao).refreshRepos()
+
+        assertTrue(dao.observeAll().first().isEmpty())
+    }
+
     private class FakeGitHubApi(
         private val repos: List<Repo> = emptyList(),
     ) : GitHubApi {
@@ -91,7 +122,10 @@ class ReposRepositoryTest {
         private val state = MutableStateFlow(initial.map { it.toEntity() })
 
         override suspend fun insertAll(repos: List<RepoEntity>) {
-            state.value = repos
+            // Upsert, like the real @Insert(REPLACE) query.
+            val merged = state.value.associateBy { it.id }.toMutableMap()
+            repos.forEach { merged[it.id] = it }
+            state.value = merged.values.toList()
         }
 
         override fun observeAll(): Flow<List<RepoEntity>> = state.map { it }
@@ -105,6 +139,10 @@ class ReposRepositoryTest {
 
         override suspend fun deleteAll() {
             state.value = emptyList()
+        }
+
+        override suspend fun deleteNotIn(ids: List<String>) {
+            state.value = state.value.filter { it.id in ids }
         }
     }
 }

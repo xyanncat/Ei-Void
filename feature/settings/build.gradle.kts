@@ -30,7 +30,9 @@ android {
 
 dependencies {
     implementation(project(":core:common"))
+    implementation(project(":core:database"))
     implementation(project(":core:security"))
+    implementation(project(":core:workspace"))
     implementation(project(":designsystem"))
 
     implementation(libs.androidx.core.ktx)
@@ -43,7 +45,8 @@ dependencies {
     implementation(libs.compose.ui)
     implementation(libs.compose.material3)
     implementation(libs.coroutines.android)
-    implementation(libs.datastore.preferences)
+    // The settings API exposes DataStore types.
+    api(libs.datastore.preferences)
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
 

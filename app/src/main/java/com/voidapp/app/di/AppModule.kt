@@ -17,7 +17,9 @@ import com.voidapp.core.security.EncryptedSecretStore
 import com.voidapp.core.security.SecretStore
 import com.voidapp.core.workspace.WorkspaceManager
 import com.voidapp.feature.settings.DataStoreSettingsStore
+import com.voidapp.feature.settings.SessionCleaner
 import com.voidapp.feature.settings.SettingsStore
+import com.voidapp.feature.settings.settingsDataStore
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -85,8 +87,27 @@ object AppModule {
     @Singleton
     fun provideGitClient(): GitClient = GitClient()
 
+    /**
+     * Application scoped coroutine scope. Work that must outlive a screen
+     * (sign-out cleanup, settings persistence) runs here.
+     */
     @Provides
     @Singleton
-    fun provideSettingsStore(@ApplicationContext context: Context): SettingsStore =
-        DataStoreSettingsStore(context, CoroutineScope(SupervisorJob() + Dispatchers.IO))
+    fun provideAppScope(): CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    @Provides
+    @Singleton
+    fun provideSettingsStore(
+        @ApplicationContext context: Context,
+        scope: CoroutineScope,
+    ): SettingsStore = DataStoreSettingsStore(settingsDataStore(context), scope)
+
+    @Provides
+    @Singleton
+    fun provideSessionCleaner(
+        secretStore: SecretStore,
+        repoDao: RepoDao,
+        workspaceManager: WorkspaceManager,
+        scope: CoroutineScope,
+    ): SessionCleaner = SessionCleaner(secretStore, repoDao, workspaceManager, scope)
 }

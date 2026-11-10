@@ -29,7 +29,7 @@ class GitClientCommitPushTest {
         val cloneRoot = Files.createTempDirectory("void-clones").toFile()
 
         runBlocking {
-            val result = CloneManager(cloneRoot) { bare.toURI().toASCIIString() }
+            val result = CloneManager(cloneRoot, remoteUrlFor = { bare.toURI().toASCIIString() })
                 .clone(repo, "token") {}
             workspace = (result as GitResult.Success).workspace
         }
@@ -67,6 +67,38 @@ class GitClientCommitPushTest {
     }
 
     @Test
+    fun `a staged file is not reported as an unstaged change`() = runTest {
+        File(workspace.path, "new.txt").writeText("hello")
+        Git.open(workspace.path).use { it.add().addFilepattern("new.txt").call() }
+
+        val status = client.status(workspace)
+
+        assertTrue(status.staged.contains("new.txt"))
+        assertFalse(status.modified.contains("new.txt"))
+    }
+
+    @Test
+    fun `a diverged branch is reported as a conflict`() = runTest {
+        val otherRoot = Files.createTempDirectory("void-clones-other").toFile()
+        val other = runBlocking {
+            val result = CloneManager(otherRoot, remoteUrlFor = { bare.toURI().toASCIIString() })
+                .clone(repo, "token") {}
+            (result as GitResult.Success).workspace
+        }
+
+        File(workspace.path, "first.txt").writeText("first")
+        client.commit(workspace, "first commit")
+        client.push(workspace, "token")
+
+        File(other.path, "second.txt").writeText("second")
+        client.commit(other, "second commit")
+        val push = client.push(other, "token")
+
+        assertTrue(push is GitResult.Conflict)
+        assertFalse(remoteMessages().contains("second commit"))
+    }
+
+    @Test
     fun `log returns the latest commit first`() = runTest {
         File(workspace.path, "new.txt").writeText("hello")
         client.commit(workspace, "add new.txt")
@@ -91,6 +123,14 @@ class GitClientCommitPushTest {
         assertTrue(client.branches(workspace).any { it.name == "feature" && it.current })
     }
 
+    @Test
+    fun `checkout of a remote only branch starts at the remote tip`() = runTest {
+        val result = client.checkout(workspace, "remote-only")
+
+        assertTrue(result is GitResult.Success)
+        assertTrue(File(workspace.path, "remote-only.txt").exists())
+    }
+
     private fun createBareWithInitialCommit(): File {
         val bareRepo = Files.createTempDirectory("void-remote").toFile()
         Git.init().setBare(true).setInitialBranch("main").setDirectory(bareRepo).call().close()
@@ -104,7 +144,21 @@ class GitClientCommitPushTest {
                 .setAuthor("Void", "void@localhost")
                 .setCommitter("Void", "void@localhost")
                 .call()
-            git.push().setRemote(bareRepo.toURI().toASCIIString()).call()
+
+            // A branch that only exists on the remote.
+            git.checkout().setCreateBranch(true).setName("remote-only").call()
+            File(seed, "remote-only.txt").writeText("remote only\n")
+            git.add().addFilepattern(".").call()
+            git.commit()
+                .setMessage("remote only")
+                .setAuthor("Void", "void@localhost")
+                .setCommitter("Void", "void@localhost")
+                .call()
+
+            git.push()
+                .setRemote(bareRepo.toURI().toASCIIString())
+                .setPushAll()
+                .call()
         }
         return bareRepo
     }

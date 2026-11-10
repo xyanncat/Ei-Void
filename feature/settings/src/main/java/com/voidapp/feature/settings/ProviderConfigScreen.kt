@@ -1,10 +1,13 @@
 package com.voidapp.feature.settings
 
+import android.content.ClipData
+import android.content.ClipboardManager
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -17,6 +20,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
@@ -39,6 +45,7 @@ fun ProviderKeysSection(viewModel: SettingsViewModel) {
 
 @Composable
 private fun ProviderKeyRow(provider: ProviderInfo, viewModel: SettingsViewModel) {
+    val context = LocalContext.current
     var draft by remember { mutableStateOf("") }
     var revealed by remember { mutableStateOf(false) }
     var saved by remember { mutableStateOf(viewModel.hasProviderKey(provider.id)) }
@@ -68,6 +75,12 @@ private fun ProviderKeyRow(provider: ProviderInfo, viewModel: SettingsViewModel)
             onValueChange = { draft = it },
             placeholder = { Text(if (saved) "Replace saved key" else "Paste API key") },
             singleLine = true,
+            // Never let the keyboard learn or capitalise key material.
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Password,
+                capitalization = KeyboardCapitalization.None,
+                autoCorrect = false,
+            ),
             visualTransformation = if (revealed) {
                 VisualTransformation.None
             } else {
@@ -101,6 +114,15 @@ private fun ProviderKeyRow(provider: ProviderInfo, viewModel: SettingsViewModel)
                 enabled = saved,
             ) {
                 Text("Clear")
+            }
+            TextButton(
+                onClick = {
+                    // Key material must not linger on the system clipboard.
+                    context.getSystemService(ClipboardManager::class.java)
+                        ?.setPrimaryClip(ClipData.newPlainText("", ""))
+                },
+            ) {
+                Text("Clear clipboard")
             }
         }
     }

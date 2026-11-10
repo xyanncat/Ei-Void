@@ -1,8 +1,17 @@
 package com.voidapp.feature.settings
 
+import com.voidapp.core.database.RepoDao
+import com.voidapp.core.database.RepoEntity
 import com.voidapp.core.security.SecretStore
+import com.voidapp.core.workspace.WorkspaceManager
+import java.io.File
+import java.nio.file.Files
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -14,7 +23,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `save and load a provider key`() = runTest {
-        val vm = SettingsViewModel(FakeSecretStore(), FakeSettingsStore())
+        val vm = viewModel()
 
         vm.saveProviderKey("openrouter", "sk-or-abc")
 
@@ -24,7 +33,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `clear removes the provider key`() = runTest {
-        val vm = SettingsViewModel(FakeSecretStore(), FakeSettingsStore())
+        val vm = viewModel()
         vm.saveProviderKey("openrouter", "sk-or-abc")
 
         vm.clearProviderKey("openrouter")
@@ -35,7 +44,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `blank keys are ignored`() = runTest {
-        val vm = SettingsViewModel(FakeSecretStore(), FakeSettingsStore())
+        val vm = viewModel()
 
         vm.saveProviderKey("nvidia", "   ")
 
@@ -45,7 +54,7 @@ class SettingsViewModelTest {
     @Test
     fun `default model is persisted`() = runTest {
         val store = FakeSettingsStore()
-        val vm = SettingsViewModel(FakeSecretStore(), store)
+        val vm = viewModel(store = store)
 
         vm.setDefaultModel("google/gemini-2.0-flash")
 
@@ -55,7 +64,7 @@ class SettingsViewModelTest {
     @Test
     fun `theme is persisted`() = runTest {
         val store = FakeSettingsStore()
-        val vm = SettingsViewModel(FakeSecretStore(), store)
+        val vm = viewModel(store = store)
 
         vm.setTheme(ThemeMode.DARK)
 
@@ -65,7 +74,7 @@ class SettingsViewModelTest {
     @Test
     fun `sign out clears the token and every provider key`() = runTest {
         val secrets = FakeSecretStore()
-        val vm = SettingsViewModel(secrets, FakeSettingsStore())
+        val vm = viewModel(secrets = secrets)
         secrets.saveToken("gho_abc")
         vm.saveProviderKey("openrouter", "sk-or-abc")
 
@@ -74,6 +83,52 @@ class SettingsViewModelTest {
         assertNull(secrets.getToken())
         assertNull(secrets.getProviderKey("openrouter"))
     }
+
+    @Test
+    fun `sign out clears the cached repositories and the cloned workspaces`() = runTest {
+        val dao = FakeDao()
+        val secrets = FakeSecretStore()
+        val workspaces = Files.createTempDirectory("void-workspaces").toFile()
+        val cleaner = SessionCleaner(
+            secrets,
+            dao,
+            WorkspaceManager(workspaces),
+            CoroutineScope(Dispatchers.Unconfined),
+        )
+        val vm = SettingsViewModel(secrets, FakeSettingsStore(), cleaner)
+        dao.insertAll(listOf(entity()))
+        File(workspaces, "owner/repo").mkdirs()
+
+        cleaner.clear().join()
+
+        assertTrue(dao.observeAll().first().isEmpty())
+        assertFalse(File(workspaces, "owner/repo").exists())
+    }
+
+    private fun viewModel(
+        secrets: FakeSecretStore = FakeSecretStore(),
+        store: FakeSettingsStore = FakeSettingsStore(),
+    ): SettingsViewModel {
+        val workspaces = Files.createTempDirectory("void-workspaces").toFile()
+        val cleaner = SessionCleaner(
+            secrets,
+            FakeDao(),
+            WorkspaceManager(workspaces),
+            CoroutineScope(Dispatchers.Unconfined),
+        )
+        return SettingsViewModel(secrets, store, cleaner)
+    }
+
+    private fun entity() = RepoEntity(
+        id = "1",
+        owner = "owner",
+        name = "repo",
+        fullName = "owner/repo",
+        isPrivate = false,
+        defaultBranch = "main",
+        description = null,
+        updatedAt = 0L,
+    )
 
     private class FakeSettingsStore : SettingsStore {
         override val defaultModel = MutableStateFlow<String?>(null)
@@ -86,6 +141,28 @@ class SettingsViewModelTest {
 
         override fun setTheme(mode: ThemeMode) {
             _theme.value = mode
+        }
+    }
+
+    private class FakeDao : RepoDao {
+        private val state = MutableStateFlow<List<RepoEntity>>(emptyList())
+
+        override suspend fun insertAll(repos: List<RepoEntity>) {
+            val merged = state.value.associateBy { it.id }.toMutableMap()
+            repos.forEach { merged[it.id] = it }
+            state.value = merged.values.toList()
+        }
+
+        override fun observeAll(): Flow<List<RepoEntity>> = state
+
+        override fun search(query: String): Flow<List<RepoEntity>> = state
+
+        override suspend fun deleteAll() {
+            state.value = emptyList()
+        }
+
+        override suspend fun deleteNotIn(ids: List<String>) {
+            state.value = state.value.filter { it.id in ids }
         }
     }
 

@@ -16,6 +16,7 @@ data class ProviderInfo(
 class SettingsViewModel @Inject constructor(
     private val secretStore: SecretStore,
     private val settingsStore: SettingsStore,
+    private val sessionCleaner: SessionCleaner,
 ) : ViewModel() {
 
     val defaultModel: StateFlow<String?> = settingsStore.defaultModel
@@ -43,9 +44,12 @@ class SettingsViewModel @Inject constructor(
         settingsStore.setTheme(mode)
     }
 
-    /** Spec: signing out clears every secret, including provider keys. */
+    /**
+     * Spec: signing out wipes tokens, keys, cached repositories and every
+     * cloned workspace.
+     */
     fun signOut() {
-        secretStore.clearAll()
+        sessionCleaner.clear()
     }
 
     companion object {

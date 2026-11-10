@@ -29,6 +29,13 @@ class ReposRepository @Inject constructor(
             page++
         }
         dao.insertAll(fetched.map { it.toEntity() })
+        // Repositories that disappeared upstream must not stay in the cache:
+        // their names can be private.
+        if (fetched.isEmpty()) {
+            dao.deleteAll()
+        } else {
+            dao.deleteNotIn(fetched.map { it.id })
+        }
         fetched
     }
 

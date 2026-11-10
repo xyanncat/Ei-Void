@@ -6,6 +6,7 @@ import com.voidapp.core.common.github.DeviceCode
 import com.voidapp.core.common.github.TokenResult
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,6 +14,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 data class LoginUiState(
     val deviceCode: DeviceCode? = null,
@@ -26,12 +28,18 @@ class LoginViewModel @Inject constructor(
     private val repository: AuthRepository,
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(
-        LoginUiState(isLoggedIn = repository.isLoggedIn()),
-    )
+    private val _state = MutableStateFlow(LoginUiState())
     val state: StateFlow<LoginUiState> = _state.asStateFlow()
 
     private var pollJob: Job? = null
+
+    init {
+        // Reading the encrypted store touches the disk: keep it off the main thread.
+        viewModelScope.launch {
+            val loggedIn = withContext(Dispatchers.IO) { repository.isLoggedIn() }
+            _state.update { it.copy(isLoggedIn = loggedIn) }
+        }
+    }
 
     fun startLogin() {
         if (_state.value.busy) return

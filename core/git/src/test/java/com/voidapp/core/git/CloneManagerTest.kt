@@ -6,7 +6,9 @@ import java.io.File
 import java.nio.file.Files
 import kotlinx.coroutines.test.runTest
 import org.eclipse.jgit.api.Git
+import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -34,7 +36,7 @@ class CloneManagerTest {
         git.close()
     }
 
-    private fun manager() = CloneManager(cloneRoot) { origin.toURI().toASCIIString() }
+    private fun manager() = CloneManager(cloneRoot, remoteUrlFor = { origin.toURI().toASCIIString() })
 
     @Test
     fun `clone creates a workspace with the repo files`() = runTest {
@@ -57,29 +59,64 @@ class CloneManagerTest {
 
     @Test
     fun `cloning an existing workspace reuses it`() = runTest {
-        manager().clone(repo, "token") {}
+        val first = manager().clone(repo, "token") {}
+        assertTrue(first is GitResult.Success)
+        val workspace = (first as GitResult.Success).workspace
+        val marker = File(workspace.path, "marker.txt").apply { writeText("marker") }
 
         val second = manager().clone(repo, "token") {}
 
         assertTrue(second is GitResult.Success)
+        // A fresh clone into a non-empty directory would fail and remove the
+        // workspace, so the surviving marker proves the workspace was reused.
+        assertTrue(marker.exists())
     }
 
     @Test
-    fun `token is not written into git config`() = runTest {
+    fun `the clone url carries no credentials`() {
+        val url = githubRemoteUrl(repo)
+
+        assertFalse(url.contains("@"))
+        assertFalse(url.contains("gho_"))
+        assertEquals("https://github.com/owner/repo.git", url)
+    }
+
+    @Test
+    fun `the token goes to the credential provider and not to the url`() = runTest {
+        var seenToken: String? = null
+        val manager = CloneManager(
+            workspaceRoot = cloneRoot,
+            remoteUrlFor = { "https://127.0.0.1:1/owner/repo.git" },
+            credentialsFor = { token ->
+                seenToken = token
+                UsernamePasswordCredentialsProvider("x-access-token", token)
+            },
+        )
+
+        // The host does not exist, so the clone fails - but the token must
+        // have been handed to the credential provider.
+        val result = manager.clone(repo, "gho_supersecret") {}
+
+        assertTrue(result is GitResult.Failure)
+        assertEquals("gho_supersecret", seenToken)
+    }
+
+    @Test
+    fun `a cloned repository stores no token in git config`() = runTest {
         manager().clone(repo, "gho_supersecret") {}
 
         val config = File(cloneRoot, "owner/repo/.git/config").readText()
 
-        assertTrue(!config.contains("gho_supersecret"))
+        assertFalse(config.contains("gho_supersecret"))
     }
 
     @Test
     fun `a failed clone leaves no partial workspace`() = runTest {
-        val failing = CloneManager(cloneRoot) { "https://127.0.0.1:1/does/not/exist.git" }
+        val failing = CloneManager(cloneRoot, remoteUrlFor = { "https://127.0.0.1:1/does/not/exist.git" })
 
         val result = failing.clone(repo, "token") {}
 
         assertTrue(result is GitResult.Failure)
-        assertTrue(!File(cloneRoot, "owner/repo").exists())
+        assertFalse(File(cloneRoot, "owner/repo").exists())
     }
 }

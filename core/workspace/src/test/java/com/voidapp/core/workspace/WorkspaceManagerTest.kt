@@ -13,10 +13,11 @@ class WorkspaceManagerTest {
 
     private lateinit var manager: WorkspaceManager
     private lateinit var workspace: Workspace
+    private lateinit var root: java.io.File
 
     @Before
     fun setUp() {
-        val root = Files.createTempDirectory("void-workspaces").toFile()
+        root = Files.createTempDirectory("void-workspaces").toFile()
         val repoPath = File(root, "owner/repo")
         File(repoPath, "src/main").mkdirs()
         File(repoPath, "README.md").writeText("# Readme\n")
@@ -101,5 +102,46 @@ class WorkspaceManagerTest {
         val escaped = runCatching { manager.readFile(workspace, "../../../etc/passwd") }
 
         assertTrue(escaped.isFailure)
+    }
+
+    @Test
+    fun `absolute paths cannot reach outside the workspace`() = runTest {
+        val outside = Files.createTempFile("void-outside", ".txt").toFile()
+        val escaped = runCatching { manager.readFile(workspace, outside.absolutePath) }
+
+        assertTrue(escaped.isFailure || escaped.getOrNull()?.path != outside.absolutePath)
+    }
+
+    @Test
+    fun `writing outside the workspace fails`() = runTest {
+        val result = manager.writeFile(workspace, "../escaped.txt", "x")
+
+        assertTrue(result is GitResult.Failure)
+    }
+
+    @Test
+    fun `deleting a directory does not follow a symlink out of the workspace`() = runTest {
+        val outside = Files.createTempDirectory("void-outside-dir").toFile()
+        val keep = File(outside, "keep.txt").apply { writeText("keep") }
+        val link = File(workspace.path, "src/escape")
+        try {
+            Files.createSymbolicLink(link.toPath(), outside.toPath())
+        } catch (error: Exception) {
+            // Creating symlinks needs privileges on Windows; the guarantee is
+            // still enforced by deleteWithoutFollowingLinks on every platform.
+            org.junit.Assume.assumeNoException(error)
+        }
+
+        manager.deleteFile(workspace, "src")
+
+        assertTrue(keep.exists())
+    }
+
+    @Test
+    fun `deleteAll removes every workspace`() = runTest {
+        manager.deleteAll()
+
+        assertFalse(workspace.path.exists())
+        assertTrue(root.exists())
     }
 }

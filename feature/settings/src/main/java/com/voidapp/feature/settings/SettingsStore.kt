@@ -25,17 +25,21 @@ interface SettingsStore {
 private val Context.settingsDataStore: DataStore<Preferences> by
     preferencesDataStore(name = "void_settings")
 
+/** The app's settings store, backed by DataStore. */
+fun settingsDataStore(context: Context): DataStore<Preferences> = context.settingsDataStore
+
 /**
  * DataStore-backed settings with an in-memory mirror, so the UI and the
  * ViewModel can read synchronously. Writes update the mirror first and then
  * persist.
+ *
+ * Only stored values are applied to the mirror: a value written before
+ * DataStore's first emission is never overwritten by the older stored value.
  */
 class DataStoreSettingsStore(
-    context: Context,
+    private val dataStore: DataStore<Preferences>,
     private val scope: CoroutineScope,
 ) : SettingsStore {
-
-    private val dataStore = context.settingsDataStore
 
     private val _defaultModel = MutableStateFlow<String?>(null)
     override val defaultModel: StateFlow<String?> = _defaultModel.asStateFlow()
@@ -46,10 +50,10 @@ class DataStoreSettingsStore(
     init {
         scope.launch {
             dataStore.data.collect { preferences ->
-                _defaultModel.value = preferences[DEFAULT_MODEL]
-                _theme.value = preferences[THEME]
+                preferences[DEFAULT_MODEL]?.let { _defaultModel.value = it }
+                preferences[THEME]
                     ?.let { stored -> ThemeMode.entries.firstOrNull { it.name == stored } }
-                    ?: ThemeMode.SYSTEM
+                    ?.let { _theme.value = it }
             }
         }
     }

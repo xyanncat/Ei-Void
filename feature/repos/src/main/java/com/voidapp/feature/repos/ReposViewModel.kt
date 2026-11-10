@@ -32,7 +32,9 @@ class ReposViewModel @Inject constructor(
     val error: StateFlow<String?> = _error.asStateFlow()
 
     val repos: StateFlow<List<Repo>> = _query
-        .debounce(150)
+        // No debounce for the cached list: the first frame shows what Room
+        // already has instead of an empty screen.
+        .debounce { query -> if (query.isBlank()) 0L else 150L }
         .flatMapLatest { query ->
             if (query.isBlank()) repository.observeRepos() else repository.search(query)
         }

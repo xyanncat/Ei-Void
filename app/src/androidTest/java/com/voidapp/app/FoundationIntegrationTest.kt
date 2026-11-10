@@ -2,14 +2,19 @@ package com.voidapp.app
 
 import android.content.Context
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.voidapp.core.common.github.DeviceCode
+import com.voidapp.core.common.github.GitHubApi
+import com.voidapp.core.common.github.GitHubAuthApi
 import com.voidapp.core.common.github.Repo
+import com.voidapp.core.common.github.TokenResult
 import com.voidapp.core.database.RepoDao
-import com.voidapp.core.database.RepoEntity
 import com.voidapp.core.git.CloneManager
 import com.voidapp.core.git.GitClient
 import com.voidapp.core.security.SecretStore
 import com.voidapp.core.workspace.GitResult
 import com.voidapp.core.workspace.WorkspaceManager
+import com.voidapp.feature.auth.AuthRepository
+import com.voidapp.feature.repos.ReposRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -31,8 +36,9 @@ import org.junit.runner.RunWith
  * Joins the parts that only work on a real device: the AndroidKeyStore-backed
  * secret store, Room over the device's SQLite, and JGit over real files.
  *
- * Network calls to GitHub are covered by unit tests with fakes; here the
- * "remote" is a local `file://` repository so the test needs no network.
+ * GitHub itself is faked - the device flow and the repository list run through
+ * the real repositories, but against a fake transport. The "remote" is a local
+ * `file://` repository, so the test needs no network.
  */
 @HiltAndroidTest
 @RunWith(AndroidJUnit4::class)
@@ -77,30 +83,21 @@ class FoundationIntegrationTest {
         val remote = createRemoteWithInitialCommit()
         val repo = Repo("1", "owner", "repo", "owner/repo", false, "main", null, 0L)
 
-        // Login: the device-flow token is persisted encrypted.
-        secretStore.saveToken("gho_integration")
+        // Login: the device flow stores its token in the encrypted store.
+        val auth = AuthRepository(FakeAuthApi("gho_integration"), secretStore)
+        val deviceCode = auth.requestDeviceCode()
+        val token = auth.pollForToken(deviceCode)
+        assertTrue(token is TokenResult.Success)
         assertEquals("gho_integration", secretStore.getToken())
 
         // Repo listing: the fetched repository is cached in Room.
-        repoDao.insertAll(
-            listOf(
-                RepoEntity(
-                    id = "1",
-                    owner = "owner",
-                    name = "repo",
-                    fullName = "owner/repo",
-                    isPrivate = false,
-                    defaultBranch = "main",
-                    description = null,
-                    updatedAt = 0L,
-                ),
-            ),
-        )
+        val repos = ReposRepository(FakeGitHubApi(listOf(repo)), repoDao)
+        repos.refreshRepos()
         assertTrue(repoDao.observeAll().first().any { it.fullName == "owner/repo" })
 
         // Clone into a workspace.
         val cloneRoot = File(base, "clones")
-        val cloned = CloneManager(cloneRoot) { remote.toURI().toASCIIString() }
+        val cloned = CloneManager(cloneRoot, remoteUrlFor = { remote.toURI().toASCIIString() })
             .clone(repo, "gho_integration") {}
         assertTrue(cloned is GitResult.Success)
         val workspace = (cloned as GitResult.Success).workspace
@@ -108,7 +105,9 @@ class FoundationIntegrationTest {
         // Read and edit through the workspace API.
         val readme = workspaceManager.readFile(workspace, "README.md")
         assertTrue(readme.lines.any { it.contains("Seed") })
-        assertTrue(workspaceManager.writeFile(workspace, "notes.txt", "written by the agent\n") is GitResult.Success)
+        assertTrue(
+            workspaceManager.writeFile(workspace, "notes.txt", "written by the agent\n") is GitResult.Success,
+        )
 
         // Commit and push.
         assertTrue(gitClient.commit(workspace, "add notes") is GitResult.Success)
@@ -117,7 +116,6 @@ class FoundationIntegrationTest {
         // The remote really received the commit.
         assertTrue(remoteMessages(remote).contains("add notes"))
         // ...and the workspace shows the edited file.
-        assertTrue(File(workspace.path, "notes.txt").exists())
         assertTrue(workspaceManager.listFiles(workspace).any { it.name == "notes.txt" })
     }
 
@@ -142,5 +140,23 @@ class FoundationIntegrationTest {
     private fun remoteMessages(remote: File): List<String> {
         val repository = FileRepositoryBuilder().setGitDir(remote).build()
         return Git(repository).use { git -> git.log().call().map { it.fullMessage.trim() } }
+    }
+
+    private class FakeAuthApi(private val token: String) : GitHubAuthApi {
+        override suspend fun requestDeviceCode(): DeviceCode = DeviceCode(
+            deviceCode = "device-code",
+            userCode = "USER-CODE",
+            verificationUri = "https://github.com/login/device",
+            expiresIn = 900,
+            interval = 5,
+        )
+
+        override suspend fun pollAccessToken(deviceCode: String): TokenResult =
+            TokenResult.Success(token)
+    }
+
+    private class FakeGitHubApi(private val repos: List<Repo>) : GitHubApi {
+        override suspend fun listRepos(page: Int): List<Repo> =
+            if (page == 1) repos else emptyList()
     }
 }

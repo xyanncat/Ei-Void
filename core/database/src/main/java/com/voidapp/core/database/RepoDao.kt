@@ -27,4 +27,8 @@ interface RepoDao {
 
     @Query("DELETE FROM repos")
     suspend fun deleteAll()
+
+    /** Removes cached repositories that the account no longer has. */
+    @Query("DELETE FROM repos WHERE id NOT IN (:ids)")
+    suspend fun deleteNotIn(ids: List<String>)
 }

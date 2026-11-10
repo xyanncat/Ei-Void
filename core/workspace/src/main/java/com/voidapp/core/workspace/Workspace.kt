@@ -7,7 +7,10 @@ import com.voidapp.core.common.github.Repo
 data class Workspace(
     val path: File,
     val repo: Repo,
-)
+) {
+    /** Stable key used to serialise git operations on this workspace. */
+    val key: String get() = path.absolutePath
+}
 
 /**
  * Result of any workspace or git operation. [Success] carries the workspace
@@ -34,3 +37,20 @@ data class FileContent(
     val lines: List<String>,
     val truncated: Boolean,
 )
+
+private val SAFE_SEGMENT = Regex("^[A-Za-z0-9._-]+$")
+
+/**
+ * The single place that decides where a repository lives on disk. Both the
+ * clone manager and the workspace manager use it, so a repository is never
+ * written to two different places.
+ */
+fun workspacePath(root: File, repo: Repo): File {
+    require(SAFE_SEGMENT.matches(repo.owner) && repo.owner != "." && repo.owner != "..") {
+        "Unsafe repository owner: ${repo.owner}"
+    }
+    require(SAFE_SEGMENT.matches(repo.name) && repo.name != "." && repo.name != "..") {
+        "Unsafe repository name: ${repo.name}"
+    }
+    return File(File(root, repo.owner), repo.name)
+}
