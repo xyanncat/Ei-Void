@@ -12,6 +12,7 @@ import com.voidapp.core.common.network.PinConfig
 import com.voidapp.core.database.RepoDao
 import com.voidapp.core.database.VoidDatabase
 import com.voidapp.core.git.CloneManager
+import com.voidapp.core.git.GitClient
 import com.voidapp.core.security.EncryptedSecretStore
 import com.voidapp.core.security.SecretStore
 import com.voidapp.core.workspace.WorkspaceManager
@@ -79,6 +80,10 @@ object AppModule {
     @Provides
     @Singleton
     fun provideCloneManager(root: File): CloneManager = CloneManager(root)
+
+    @Provides
+    @Singleton
+    fun provideGitClient(): GitClient = GitClient()
 
     @Provides
     @Singleton

@@ -89,4 +89,12 @@ dependencies {
     ksp(libs.hilt.compiler)
 
     testImplementation(libs.junit)
+
+    androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(libs.hilt.android.testing)
+    androidTestImplementation(libs.coroutines.test)
+    // JGit is an implementation detail of :core:git; the test builds a local remote.
+    androidTestImplementation(libs.jgit)
+    kspAndroidTest(libs.hilt.compiler)
 }
