@@ -15,7 +15,7 @@
 ## Global Constraints
 
 - `minSdk = 35`, `targetSdk = 35`, `compileSdk = 35`; ABI filter `arm64-v8a` only.
-- Base package: `com.void`.
+- Base package: `com.voidapp`.
 - No analytics, telemetry, crash reporting, or third-party SDKs.
 - Permissions: `INTERNET` only.
 - Transport: TLS 1.3, certificate pinning, no cleartext (`network_security_config.xml`).
@@ -62,13 +62,13 @@
 
 **Interfaces:**
 - Consumes: nothing.
-- Produces: `com.void.designsystem.theme.VoidColors` (object with `primary`, `secondary`, `accent`, `surfaceDark`, `surfaceLight`); `VoidTheme` composable; the Gradle module structure later tasks import.
+- Produces: `com.voidapp.designsystem.theme.VoidColors` (object with `primary`, `secondary`, `accent`, `surfaceDark`, `surfaceLight`); `VoidTheme` composable; the Gradle module structure later tasks import.
 
 - [ ] **Step 1: Write the failing test**
 
 `designsystem/src/test/java/com/void/designsystem/theme/ColorTest.kt`:
 ```kotlin
-package com.void.designsystem.theme
+package com.voidapp.designsystem.theme
 
 import androidx.compose.ui.graphics.Color
 import org.junit.Test
@@ -88,7 +88,7 @@ class ColorTest {
 
 - [ ] **Step 2: Run the test to verify it fails**
 
-Run: `./gradlew :designsystem:testDebugUnitTest --tests "com.void.designsystem.theme.ColorTest"`
+Run: `./gradlew :designsystem:testDebugUnitTest --tests "com.voidapp.designsystem.theme.ColorTest"`
 Expected: FAIL — `VoidColors` unresolved.
 
 - [ ] **Step 3: Create the Gradle scaffold**
@@ -101,7 +101,7 @@ Expected: FAIL — `VoidColors` unresolved.
 
 - [ ] **Step 5: Run the test to verify it passes**
 
-Run: `./gradlew :designsystem:testDebugUnitTest --tests "com.void.designsystem.theme.ColorTest"`
+Run: `./gradlew :designsystem:testDebugUnitTest --tests "com.voidapp.designsystem.theme.ColorTest"`
 Expected: PASS.
 
 - [ ] **Step 6: Create the app shell**
@@ -170,7 +170,7 @@ class SecretStoreTest {
 
 - [ ] **Step 2: Run the test to verify it fails**
 
-Run: `./gradlew :core:security:testDebugUnitTest --tests "com.void.core.security.SecretStoreTest"`
+Run: `./gradlew :core:security:testDebugUnitTest --tests "com.voidapp.core.security.SecretStoreTest"`
 Expected: FAIL — `SecretStore` unresolved.
 
 - [ ] **Step 3: Implement `SecretStore`**
@@ -179,7 +179,7 @@ Use `EncryptedSharedPreferences.create(...)` with `MasterKey.Builder(...).setKey
 
 - [ ] **Step 4: Run the test to verify it passes**
 
-Run: `./gradlew :core:security:testDebugUnitTest --tests "com.void.core.security.SecretStoreTest"`
+Run: `./gradlew :core:security:testDebugUnitTest --tests "com.voidapp.core.security.SecretStoreTest"`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -220,7 +220,7 @@ class PinConfigTest {
 
 - [ ] **Step 2: Run the test to verify it fails**
 
-Run: `./gradlew :core:common:testDebugUnitTest --tests "com.void.core.common.network.PinConfigTest"`
+Run: `./gradlew :core:common:testDebugUnitTest --tests "com.voidapp.core.common.network.PinConfigTest"`
 Expected: FAIL — `NetworkModule` unresolved.
 
 - [ ] **Step 3: Implement pinning and the network module**
@@ -242,7 +242,7 @@ Expected: FAIL — `NetworkModule` unresolved.
 
 - [ ] **Step 5: Run the test to verify it passes**
 
-Run: `./gradlew :core:common:testDebugUnitTest --tests "com.void.core.common.network.PinConfigTest"`
+Run: `./gradlew :core:common:testDebugUnitTest --tests "com.voidapp.core.common.network.PinConfigTest"`
 Expected: PASS.
 
 - [ ] **Step 6: Commit**
@@ -299,7 +299,7 @@ class RepoDaoTest {
 
 - [ ] **Step 2: Run the test to verify it fails**
 
-Run: `./gradlew :core:database:testDebugUnitTest --tests "com.void.core.database.RepoDaoTest"`
+Run: `./gradlew :core:database:testDebugUnitTest --tests "com.voidapp.core.database.RepoDaoTest"`
 Expected: FAIL — `VoidDatabase` unresolved.
 
 - [ ] **Step 3: Implement the database**
@@ -308,7 +308,7 @@ Expected: FAIL — `VoidDatabase` unresolved.
 
 - [ ] **Step 4: Run the test to verify it passes**
 
-Run: `./gradlew :core:database:testDebugUnitTest --tests "com.void.core.database.RepoDaoTest"`
+Run: `./gradlew :core:database:testDebugUnitTest --tests "com.voidapp.core.database.RepoDaoTest"`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -366,7 +366,7 @@ class AuthRepositoryTest {
 
 - [ ] **Step 2: Run the test to verify it fails**
 
-Run: `./gradlew :feature:auth:testDebugUnitTest --tests "com.void.feature.auth.AuthRepositoryTest"`
+Run: `./gradlew :feature:auth:testDebugUnitTest --tests "com.voidapp.feature.auth.AuthRepositoryTest"`
 Expected: FAIL — `AuthRepository` unresolved.
 
 - [ ] **Step 3: Implement the auth API and repository**
@@ -375,7 +375,7 @@ Expected: FAIL — `AuthRepository` unresolved.
 
 - [ ] **Step 4: Run the test to verify it passes**
 
-Run: `./gradlew :feature:auth:testDebugUnitTest --tests "com.void.feature.auth.AuthRepositoryTest"`
+Run: `./gradlew :feature:auth:testDebugUnitTest --tests "com.voidapp.feature.auth.AuthRepositoryTest"`
 Expected: PASS.
 
 - [ ] **Step 5: Implement the login UI**
@@ -430,7 +430,7 @@ class ReposRepositoryTest {
 
 - [ ] **Step 2: Run the test to verify it fails**
 
-Run: `./gradlew :feature:repos:testDebugUnitTest --tests "com.void.feature.repos.ReposRepositoryTest"`
+Run: `./gradlew :feature:repos:testDebugUnitTest --tests "com.voidapp.feature.repos.ReposRepositoryTest"`
 Expected: FAIL — `ReposRepository` unresolved.
 
 - [ ] **Step 3: Implement the API and repository**
@@ -439,7 +439,7 @@ Expected: FAIL — `ReposRepository` unresolved.
 
 - [ ] **Step 4: Run the test to verify it passes**
 
-Run: `./gradlew :feature:repos:testDebugUnitTest --tests "com.void.feature.repos.ReposRepositoryTest"`
+Run: `./gradlew :feature:repos:testDebugUnitTest --tests "com.voidapp.feature.repos.ReposRepositoryTest"`
 Expected: PASS.
 
 - [ ] **Step 5: Implement the repos UI**
@@ -493,7 +493,7 @@ class CloneManagerTest {
 
 - [ ] **Step 2: Run the test to verify it fails**
 
-Run: `./gradlew :core:git:testDebugUnitTest --tests "com.void.core.git.CloneManagerTest"`
+Run: `./gradlew :core:git:testDebugUnitTest --tests "com.voidapp.core.git.CloneManagerTest"`
 Expected: FAIL — `CloneManager` unresolved.
 
 - [ ] **Step 3: Implement cloning**
@@ -502,7 +502,7 @@ Expected: FAIL — `CloneManager` unresolved.
 
 - [ ] **Step 4: Run the test to verify it passes**
 
-Run: `./gradlew :core:git:testDebugUnitTest --tests "com.void.core.git.CloneManagerTest"`
+Run: `./gradlew :core:git:testDebugUnitTest --tests "com.voidapp.core.git.CloneManagerTest"`
 Expected: PASS.
 
 - [ ] **Step 5: Write the failing test for the workspace**
@@ -535,7 +535,7 @@ class WorkspaceManagerTest {
 
 - [ ] **Step 6: Run the test to verify it fails**
 
-Run: `./gradlew :core:workspace:testDebugUnitTest --tests "com.void.core.workspace.WorkspaceManagerTest"`
+Run: `./gradlew :core:workspace:testDebugUnitTest --tests "com.voidapp.core.workspace.WorkspaceManagerTest"`
 Expected: FAIL — `WorkspaceManager` unresolved.
 
 - [ ] **Step 7: Implement the workspace manager**
@@ -544,7 +544,7 @@ Expected: FAIL — `WorkspaceManager` unresolved.
 
 - [ ] **Step 8: Run the test to verify it passes**
 
-Run: `./gradlew :core:workspace:testDebugUnitTest --tests "com.void.core.workspace.WorkspaceManagerTest"`
+Run: `./gradlew :core:workspace:testDebugUnitTest --tests "com.voidapp.core.workspace.WorkspaceManagerTest"`
 Expected: PASS.
 
 - [ ] **Step 9: Implement the workspace screen**
@@ -598,7 +598,7 @@ class GitClientCommitPushTest {
 
 - [ ] **Step 2: Run the test to verify it fails**
 
-Run: `./gradlew :core:git:testDebugUnitTest --tests "com.void.core.git.GitClientCommitPushTest"`
+Run: `./gradlew :core:git:testDebugUnitTest --tests "com.voidapp.core.git.GitClientCommitPushTest"`
 Expected: FAIL — `GitClient` unresolved.
 
 - [ ] **Step 3: Implement commit/push/status/log/branches/checkout**
@@ -607,7 +607,7 @@ Expected: FAIL — `GitClient` unresolved.
 
 - [ ] **Step 4: Run the test to verify it passes**
 
-Run: `./gradlew :core:git:testDebugUnitTest --tests "com.void.core.git.GitClientCommitPushTest"`
+Run: `./gradlew :core:git:testDebugUnitTest --tests "com.voidapp.core.git.GitClientCommitPushTest"`
 Expected: PASS.
 
 - [ ] **Step 5: Write the failing test for the diff engine**
@@ -636,7 +636,7 @@ class DiffEngineTest {
 
 - [ ] **Step 6: Run the test to verify it fails**
 
-Run: `./gradlew :core:workspace:testDebugUnitTest --tests "com.void.core.workspace.DiffEngineTest"`
+Run: `./gradlew :core:workspace:testDebugUnitTest --tests "com.voidapp.core.workspace.DiffEngineTest"`
 Expected: FAIL — `DiffEngine` unresolved.
 
 - [ ] **Step 7: Implement the diff engine**
@@ -645,7 +645,7 @@ Expected: FAIL — `DiffEngine` unresolved.
 
 - [ ] **Step 8: Run the test to verify it passes**
 
-Run: `./gradlew :core:workspace:testDebugUnitTest --tests "com.void.core.workspace.DiffEngineTest"`
+Run: `./gradlew :core:workspace:testDebugUnitTest --tests "com.voidapp.core.workspace.DiffEngineTest"`
 Expected: PASS.
 
 - [ ] **Step 9: Commit**
@@ -698,7 +698,7 @@ class SettingsViewModelTest {
 
 - [ ] **Step 2: Run the test to verify it fails**
 
-Run: `./gradlew :feature:settings:testDebugUnitTest --tests "com.void.feature.settings.SettingsViewModelTest"`
+Run: `./gradlew :feature:settings:testDebugUnitTest --tests "com.voidapp.feature.settings.SettingsViewModelTest"`
 Expected: FAIL — `SettingsViewModel` unresolved.
 
 - [ ] **Step 3: Implement the settings ViewModel and store**
@@ -707,7 +707,7 @@ Expected: FAIL — `SettingsViewModel` unresolved.
 
 - [ ] **Step 4: Run the test to verify it passes**
 
-Run: `./gradlew :feature:settings:testDebugUnitTest --tests "com.void.feature.settings.SettingsViewModelTest"`
+Run: `./gradlew :feature:settings:testDebugUnitTest --tests "com.voidapp.feature.settings.SettingsViewModelTest"`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**

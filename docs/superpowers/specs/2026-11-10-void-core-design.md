@@ -45,14 +45,14 @@ The agent is a local **tool-use loop**: the model chooses tools, the app execute
 
 ## 5. Module structure
 
-Base package: `com.void`
+Base package: `com.voidapp`
 
 ```
 void/
-  app/                              com.void.app
+  app/                              com.voidapp.app
     MainActivity, VoidApp (Hilt), NavHost, onboarding gate
   core/
-    agent/                          com.void.core.agent
+    agent/                          com.voidapp.core.agent
       AgentEngine, AgentSink, ToolRegistry, Tool, ToolResult
       tools/                        ListFiles, ReadFile, WriteFile, EditFile,
                                     SearchFiles, CreateFile, DeleteFile,
@@ -61,31 +61,31 @@ void/
                                     ListRepos, CreateRepo, RepoInfo
       planner/                      Planner, Plan, Step
       context/                      ContextManager, MessageHistory, TokenBudget
-    ai/                             com.void.core.ai
+    ai/                             com.voidapp.core.ai
       AiProvider, ChatRequest, ChatChunk, Model, Tier
       openai/                       OpenAiCompatibleAdapter, OpenAiConfig
       router/                       SmartRouter, TaskClassifier
       models/                       ModelCatalog
-    git/                            com.void.core.git
+    git/                            com.voidapp.core.git
       GitClient, CloneManager, GitAuth, GitResult, GitConflict
-    workspace/                      com.void.core.workspace
+    workspace/                      com.voidapp.core.workspace
       WorkspaceManager, FileTree, FileInfo, DiffEngine, WorkspaceStorage
-    security/                       com.void.core.security
+    security/                       com.voidapp.core.security
       SecretStore (EncryptedSharedPreferences), TokenStore, KeyStoreFactory
-    common/                         com.void.core.common
+    common/                         com.voidapp.core.common
       Result types, Dispatchers, Logger, extensions
   feature/
-    auth/                           com.void.feature.auth
+    auth/                           com.voidapp.feature.auth
       LoginScreen, LoginViewModel, AuthRepository
-    repos/                          com.void.feature.repos
+    repos/                          com.voidapp.feature.repos
       ReposScreen, ReposViewModel, RepoPicker, CloneProgress
-    chat/                           com.void.feature.chat
+    chat/                           com.voidapp.feature.chat
       ChatScreen, ChatViewModel, MessageList, ToolCallCard, DiffCard
-    editor/                         com.void.feature.editor
+    editor/                         com.voidapp.feature.editor
       EditorScreen, EditorViewModel, CodeView, DiffView, FileTreePane
-    settings/                       com.void.feature.settings
+    settings/                       com.voidapp.feature.settings
       SettingsScreen, SettingsViewModel, ProviderConfigScreen, ModelDefaults
-  designsystem/                     com.void.designsystem
+  designsystem/                     com.voidapp.designsystem
     theme/ (Color, Type, Shape, Theme), tokens/, components/, illustration/
 ```
 
