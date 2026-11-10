@@ -2,6 +2,7 @@ package com.voidapp.feature.settings
 
 import com.voidapp.core.database.RepoDao
 import com.voidapp.core.database.RepoEntity
+import com.voidapp.core.ai.Tier
 import com.voidapp.core.security.SecretStore
 import com.voidapp.core.workspace.WorkspaceManager
 import java.io.File
@@ -52,13 +53,13 @@ class SettingsViewModelTest {
     }
 
     @Test
-    fun `default model is persisted`() = runTest {
+    fun `the preferred tier is persisted`() = runTest {
         val store = FakeSettingsStore()
         val vm = viewModel(store = store)
 
-        vm.setDefaultModel("google/gemini-2.0-flash")
+        vm.setPreferredTier(Tier.RED_DWARF)
 
-        assertEquals("google/gemini-2.0-flash", store.defaultModel.value)
+        assertEquals(Tier.RED_DWARF, store.preferredTier.value)
     }
 
     @Test
@@ -131,16 +132,18 @@ class SettingsViewModelTest {
     )
 
     private class FakeSettingsStore : SettingsStore {
-        override val defaultModel = MutableStateFlow<String?>(null)
         private val _theme = MutableStateFlow(ThemeMode.SYSTEM)
         override val theme: StateFlow<ThemeMode> = _theme
 
-        override fun setDefaultModel(modelId: String) {
-            defaultModel.value = modelId
-        }
+        private val _preferredTier = MutableStateFlow<Tier?>(null)
+        override val preferredTier: StateFlow<Tier?> = _preferredTier
 
         override fun setTheme(mode: ThemeMode) {
             _theme.value = mode
+        }
+
+        override fun setPreferredTier(tier: Tier?) {
+            _preferredTier.value = tier
         }
     }
 

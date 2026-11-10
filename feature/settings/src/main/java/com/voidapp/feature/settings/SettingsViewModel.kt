@@ -1,6 +1,7 @@
 package com.voidapp.feature.settings
 
 import androidx.lifecycle.ViewModel
+import com.voidapp.core.ai.Tier
 import com.voidapp.core.security.SecretStore
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -19,8 +20,8 @@ class SettingsViewModel @Inject constructor(
     private val sessionCleaner: SessionCleaner,
 ) : ViewModel() {
 
-    val defaultModel: StateFlow<String?> = settingsStore.defaultModel
     val theme: StateFlow<ThemeMode> = settingsStore.theme
+    val preferredTier: StateFlow<Tier?> = settingsStore.preferredTier
 
     fun saveProviderKey(providerId: String, key: String) {
         if (key.isBlank()) return
@@ -36,8 +37,9 @@ class SettingsViewModel @Inject constructor(
     fun hasProviderKey(providerId: String): Boolean =
         !secretStore.getProviderKey(providerId).isNullOrBlank()
 
-    fun setDefaultModel(modelId: String) {
-        settingsStore.setDefaultModel(modelId.trim())
+    /** Null means "let the router decide". */
+    fun setPreferredTier(tier: Tier?) {
+        settingsStore.setPreferredTier(tier)
     }
 
     fun setTheme(mode: ThemeMode) {
@@ -56,8 +58,8 @@ class SettingsViewModel @Inject constructor(
         val PROVIDERS = listOf(
             ProviderInfo("openrouter", "OpenRouter", "Free models via a single key"),
             ProviderInfo("nvidia", "NVIDIA NIM", "Free hosted model endpoints"),
+            ProviderInfo("nara", "Nara Router", "Routes across free models"),
             ProviderInfo("kira", "Kira AI", "Free tier assistant"),
-            ProviderInfo("nara", "Nara Router", "Routes across providers"),
         )
     }
 }

@@ -3,6 +3,7 @@ package com.voidapp.core.ai.router
 import com.voidapp.core.ai.AiProvider
 import com.voidapp.core.ai.Model
 import com.voidapp.core.ai.Tier
+import com.voidapp.core.ai.models.ModelCatalog
 
 /** A model the user can reach right now. */
 data class Candidate(
@@ -14,21 +15,27 @@ data class Candidate(
 data class Route(
     val providerId: String,
     val model: Model,
-    /** Why this model was chosen; shown in the UI. */
+    /** Why this tier was chosen; shown in the UI. */
     val reason: String,
-)
+) {
+    /** What the user sees: "Red Dwarfs", never the provider's model id. */
+    val tierName: String get() = model.displayName
+}
 
 /**
- * Picks the model for a task.
+ * Picks the tier for a task.
  *
- * The user's default model wins, except for complex tasks (refactor, scaffold)
- * where the router upgrades to a stronger model. Free models are preferred
- * when the task does not need more.
+ * - Explain and small edits go to Neutron Stars (small, fast).
+ * - Reviews and refactors go to White Dwarfs (middle).
+ * - Scaffolding goes to Red Dwarfs (high).
+ *
+ * When the user picked a tier explicitly, that tier wins; when it is
+ * unavailable the router takes the closest stronger one, never a weaker one.
  */
 class SmartRouter(
     private val classifier: TaskClassifier = TaskClassifier(),
-    /** The model id the user set in Settings, if any. */
-    private val defaultModelId: () -> String? = { null },
+    /** The tier the user chose in Settings; null means "decide for me". */
+    private val preferredTier: () -> Tier? = { null },
 ) {
 
     fun classify(task: String): TaskKind = classifier.classify(task)
@@ -38,30 +45,22 @@ class SmartRouter(
         if (candidates.isEmpty()) return null
 
         val kind = classify(task)
-        val ranked = rank(kind, candidates)
+        val wanted = preferredTier() ?: tierFor(kind)
+        val ranked = rank(wanted, candidates)
 
-        val userDefault = defaultModelId()
-        val defaultCandidate = ranked.firstOrNull { it.model.id == userDefault }
-        val best = ranked.first()
-
-        val chosen = when {
-            defaultCandidate == null -> best
-            // A complex task may need more than the default model.
-            kind.isComplex && best.model.tier == Tier.STRONG -> best
-            else -> defaultCandidate
-        }
-
+        val chosen = ranked.first()
         return Route(
             providerId = chosen.provider.id,
             model = chosen.model,
-            reason = reasonFor(chosen, kind, best, defaultCandidate),
+            reason = reasonFor(chosen, kind, wanted),
         )
     }
 
     /** The next candidate after a provider failed. */
     fun next(task: String, candidates: List<Candidate>, failed: Set<String>): Route? {
         val kind = classify(task)
-        return rank(kind, candidates)
+        val wanted = preferredTier() ?: tierFor(kind)
+        return rank(wanted, candidates)
             .firstOrNull { it.provider.id !in failed }
             ?.let {
                 Route(
@@ -72,36 +71,36 @@ class SmartRouter(
             }
     }
 
-    private fun rank(kind: TaskKind, candidates: List<Candidate>): List<Candidate> {
-        val preferred = preferredTier(kind)
-        val tierOrder = when (preferred) {
-            Tier.FAST -> listOf(Tier.FAST, Tier.STANDARD, Tier.STRONG)
-            Tier.STANDARD -> listOf(Tier.STANDARD, Tier.STRONG, Tier.FAST)
-            Tier.STRONG -> listOf(Tier.STRONG, Tier.STANDARD, Tier.FAST)
-        }
+    /** The tier a task wants when the user has no preference. */
+    fun tierFor(kind: TaskKind): Tier = when (kind) {
+        TaskKind.EXPLAIN, TaskKind.EDIT -> Tier.NEUTRON_STAR
+        TaskKind.REVIEW, TaskKind.REFACTOR -> Tier.WHITE_DWARF
+        TaskKind.SCAFFOLD -> Tier.RED_DWARF
+    }
+
+    private fun rank(wanted: Tier, candidates: List<Candidate>): List<Candidate> {
+        val tierOrder = orderFrom(wanted)
 
         return candidates.sortedWith(
             compareBy<Candidate> { tierOrder.indexOf(it.model.tier) }
-                .thenBy { if (it.model.isFree) 0 else 1 }
+                .thenBy { ModelCatalog.rankOf(it.model.id, it.model.providerId) }
                 .thenBy { it.model.id },
         )
     }
 
-    private fun preferredTier(kind: TaskKind): Tier = when (kind) {
-        TaskKind.EXPLAIN, TaskKind.EDIT -> Tier.FAST
-        TaskKind.REVIEW, TaskKind.REFACTOR -> Tier.STANDARD
-        TaskKind.SCAFFOLD -> Tier.STRONG
+    /**
+     * The wanted tier first, then the stronger ones (best first), then the
+     * weaker ones.
+     */
+    private fun orderFrom(wanted: Tier): List<Tier> {
+        val stronger = Tier.entries.filter { it.rank < wanted.rank }.sortedBy { it.rank }
+        val weaker = Tier.entries.filter { it.rank > wanted.rank }.sortedBy { it.rank }
+        return listOf(wanted) + stronger + weaker
     }
 
-    private fun reasonFor(
-        chosen: Candidate,
-        kind: TaskKind,
-        best: Candidate,
-        defaultCandidate: Candidate?,
-    ): String = when {
-        defaultCandidate == null -> "best free ${kind.name.lowercase()} model"
-        chosen.model.id != defaultCandidate.model.id -> "upgraded for a ${kind.name.lowercase()} task"
-        best.model.id == chosen.model.id -> "your default model"
-        else -> "your default model"
+    private fun reasonFor(chosen: Candidate, kind: TaskKind, wanted: Tier): String = when {
+        chosen.model.tier != wanted -> "nearest available tier for a ${kind.name.lowercase()} task"
+        preferredTier() != null -> "your chosen tier"
+        else -> "best fit for a ${kind.name.lowercase()} task"
     }
 }

@@ -5,8 +5,8 @@ import com.voidapp.core.ai.AiProviderException
 import com.voidapp.core.ai.ChatChunk
 import com.voidapp.core.ai.ChatRequest
 import com.voidapp.core.ai.Model
+import com.voidapp.core.ai.models.ModelCatalog
 import com.voidapp.core.ai.Role
-import com.voidapp.core.ai.Tier
 import com.voidapp.core.ai.ToolCall
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
@@ -72,14 +72,8 @@ class OpenAiCompatibleProvider(
 
         return entries.mapNotNull { element ->
             val modelId = element.jsonObject["id"]?.jsonPrimitive?.contentOrNull ?: return@mapNotNull null
-            Model(
-                id = modelId,
-                providerId = config.providerId,
-                displayName = modelId,
-                tier = Tier.STANDARD,
-                contextWindow = DEFAULT_CONTEXT_WINDOW,
-                isFree = config.freeModelSuffix?.let { modelId.endsWith(it) } == true,
-            )
+            ModelCatalog.infer(modelId, config.providerId, config.freeModelSuffix)
+                .copy(supportsTools = true)
         }
     }
 
@@ -269,10 +263,6 @@ class OpenAiCompatibleProvider(
             name = name,
             arguments = parseArguments(json, arguments.toString()),
         )
-    }
-
-    private companion object {
-        const val DEFAULT_CONTEXT_WINDOW = 8_192
     }
 }
 

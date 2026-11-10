@@ -2,11 +2,13 @@ package com.voidapp.feature.settings
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.stringPreferencesKey
+import com.voidapp.core.ai.Tier
 import java.io.File
 import java.nio.file.Files
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -17,17 +19,31 @@ import org.junit.Test
 class DataStoreSettingsStoreTest {
 
     @Test
-    fun `the default model is written to disk`() = runTest {
+    fun `the preferred tier is written to disk`() = runTest {
         val file = settingsFile()
         val dataStore = PreferenceDataStoreFactory.create(scope = backgroundScope) { file }
         val store = DataStoreSettingsStore(dataStore, backgroundScope)
 
-        store.setDefaultModel("google/gemini-2.0-flash")
+        store.setPreferredTier(Tier.RED_DWARF)
 
-        assertEquals("google/gemini-2.0-flash", store.defaultModel.value)
-        val stored = dataStore.data.first { it[MODEL_KEY] == "google/gemini-2.0-flash" }
-        assertEquals("google/gemini-2.0-flash", stored[MODEL_KEY])
-        assertTrue(file.readText().contains("google/gemini-2.0-flash"))
+        assertEquals(Tier.RED_DWARF, store.preferredTier.value)
+        val stored = dataStore.data.first { it[TIER_KEY] == Tier.RED_DWARF.name }
+        assertEquals(Tier.RED_DWARF.name, stored[TIER_KEY])
+        assertTrue(file.readText().contains(Tier.RED_DWARF.name))
+    }
+
+    @Test
+    fun `auto clears the stored tier`() = runTest {
+        val file = settingsFile()
+        val dataStore = PreferenceDataStoreFactory.create(scope = backgroundScope) { file }
+        val store = DataStoreSettingsStore(dataStore, backgroundScope)
+
+        store.setPreferredTier(Tier.NEUTRON_STAR)
+        store.setPreferredTier(null)
+
+        assertNull(store.preferredTier.value)
+        val stored = dataStore.data.first { it[TIER_KEY] == null }
+        assertNull(stored[TIER_KEY])
     }
 
     @Test
@@ -49,9 +65,9 @@ class DataStoreSettingsStoreTest {
         val dataStore = PreferenceDataStoreFactory.create(scope = backgroundScope) { file }
         val store = DataStoreSettingsStore(dataStore, backgroundScope)
 
-        store.setDefaultModel("written-first")
+        store.setPreferredTier(Tier.WHITE_DWARF)
 
-        assertEquals("written-first", store.defaultModel.value)
+        assertEquals(Tier.WHITE_DWARF, store.preferredTier.value)
     }
 
     private fun settingsFile(): File {
@@ -60,7 +76,7 @@ class DataStoreSettingsStoreTest {
     }
 
     private companion object {
-        val MODEL_KEY = stringPreferencesKey("default_model")
+        val TIER_KEY = stringPreferencesKey("preferred_tier")
         val THEME_KEY = stringPreferencesKey("theme")
     }
 }

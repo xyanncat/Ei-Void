@@ -4,69 +4,78 @@ import com.voidapp.core.ai.Model
 import com.voidapp.core.ai.Tier
 
 /**
- * Turns a model id into the metadata the router needs: how heavy the model is,
- * how much context it takes and whether it is free.
+ * The models Void knows, mapped to the tier the user sees.
  *
- * The provider reports which models exist; this decides how to rank them.
+ * The provider ids are internal: neither the chat nor the settings ever show
+ * them. [rank] is the quality order of the models inside the whole catalog
+ * (1 is the strongest), used to pick one model when a tier has several.
  */
+data class CatalogModel(
+    val id: String,
+    val providerId: String,
+    val tier: Tier,
+    val rank: Int,
+)
+
 object ModelCatalog {
 
-    /** Models whose weight cannot be guessed from the id. */
-    private val tierOverrides = mapOf(
-        "gpt-4o-mini" to Tier.FAST,
-        "gpt-4o" to Tier.STANDARD,
-        "gpt-4.1-mini" to Tier.FAST,
-        "gpt-4.1" to Tier.STANDARD,
-        "claude-3-5-haiku" to Tier.FAST,
-        "claude-3-5-sonnet" to Tier.STANDARD,
-        "claude-sonnet-4" to Tier.STANDARD,
-        "claude-opus-4" to Tier.STRONG,
-        "llama-3.1-8b-instruct" to Tier.FAST,
-        "llama-3.3-70b-instruct" to Tier.STRONG,
-        "deepseek-coder-v2" to Tier.STANDARD,
-        "qwen2.5-coder-32b-instruct" to Tier.STANDARD,
-        "gemma-3-4b-it" to Tier.FAST,
+    /**
+     * Order within a tier comes from [CatalogModel.rank].
+     *
+     * - Red Dwarfs: the two strongest coding models.
+     * - White Dwarfs: the two in the middle.
+     * - Neutron Stars: the small, fast ones.
+     */
+    val all: List<CatalogModel> = listOf(
+        // Red Dwarfs (high)
+        CatalogModel("deepseek-ai/deepseek-v4.1-flash", "nvidia", Tier.RED_DWARF, rank = 1),
+        CatalogModel("minimaxai/minimax-m3.1-flash", "nvidia", Tier.RED_DWARF, rank = 2),
+
+        // White Dwarfs (middle)
+        CatalogModel("stepfun-ai/step-5-preview", "nvidia", Tier.WHITE_DWARF, rank = 3),
+        CatalogModel("laguna-s-2.1", "nara", Tier.WHITE_DWARF, rank = 4),
+
+        // Neutron Stars (small)
+        CatalogModel("nvidia/nemotron-3-ultra-550b-a55b", "openrouter", Tier.NEUTRON_STAR, rank = 5),
+        CatalogModel("poolside/laguna-xs-2.1", "nvidia", Tier.NEUTRON_STAR, rank = 6),
+        CatalogModel("cohere/north-mini-code:free", "openrouter", Tier.NEUTRON_STAR, rank = 7),
     )
 
-    private val contextOverrides = mapOf(
-        "gpt-4o" to 128_000,
-        "gpt-4.1" to 1_000_000,
-        "claude-3-5-sonnet" to 200_000,
-        "claude-sonnet-4" to 200_000,
-        "llama-3.1-8b-instruct" to 128_000,
-        "llama-3.3-70b-instruct" to 128_000,
+    fun forProvider(providerId: String): List<CatalogModel> =
+        all.filter { it.providerId == providerId }.sortedBy { it.rank }
+
+    fun forTier(tier: Tier): List<CatalogModel> =
+        all.filter { it.tier == tier }.sortedBy { it.rank }
+
+    fun find(modelId: String, providerId: String): CatalogModel? =
+        all.firstOrNull { it.id == modelId && it.providerId == providerId }
+
+    /** The quality rank of a model, or a large number when it is unknown. */
+    fun rankOf(modelId: String, providerId: String): Int =
+        find(modelId, providerId)?.rank ?: Int.MAX_VALUE
+
+    /** Turns a catalog entry into the model the engine calls. */
+    fun toModel(entry: CatalogModel): Model = Model(
+        id = entry.id,
+        providerId = entry.providerId,
+        displayName = entry.tier.displayName,
+        tier = entry.tier,
+        contextWindow = DEFAULT_CONTEXT_WINDOW,
+        isFree = true,
     )
 
-    const val DEFAULT_CONTEXT_WINDOW = 32_000
-
-    fun tierFor(modelId: String): Tier {
-        val bare = modelId.substringAfterLast('/')
-        tierOverrides[bare]?.let { return it }
-
-        val lower = bare.lowercase()
-        return when {
-            FAST_MARKERS.any { lower.contains(it) } -> Tier.FAST
-            STRONG_MARKERS.any { lower.contains(it) } -> Tier.STRONG
-            else -> Tier.STANDARD
-        }
+    /** For a model the provider reports but the catalog does not know. */
+    fun infer(modelId: String, providerId: String, freeModelSuffix: String? = null): Model {
+        val tier = all.firstOrNull { it.id == modelId }?.tier ?: Tier.WHITE_DWARF
+        return Model(
+            id = modelId,
+            providerId = providerId,
+            displayName = tier.displayName,
+            tier = tier,
+            contextWindow = DEFAULT_CONTEXT_WINDOW,
+            isFree = freeModelSuffix?.let { modelId.endsWith(it) } == true,
+        )
     }
 
-    fun contextWindowFor(modelId: String): Int =
-        contextOverrides[modelId.substringAfterLast('/')] ?: DEFAULT_CONTEXT_WINDOW
-
-    /** Free models say so in their id, or the whole provider is free. */
-    fun isFree(modelId: String, providerIsFree: Boolean = false): Boolean =
-        providerIsFree || modelId.endsWith(":free") || modelId.contains("/free")
-
-    fun infer(modelId: String, providerId: String, providerIsFree: Boolean = false): Model = Model(
-        id = modelId,
-        providerId = providerId,
-        displayName = modelId.substringAfterLast('/'),
-        tier = tierFor(modelId),
-        contextWindow = contextWindowFor(modelId),
-        isFree = isFree(modelId, providerIsFree),
-    )
-
-    private val FAST_MARKERS = listOf("mini", "flash", "haiku", "8b", "4b", "tiny", "small")
-    private val STRONG_MARKERS = listOf("opus", "ultra", "70b", "405b", "large")
+    const val DEFAULT_CONTEXT_WINDOW = 32_000
 }

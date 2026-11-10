@@ -142,7 +142,7 @@ class AgentIntegrationTest {
         override suspend fun targets(): List<ProviderTarget> = listOf(
             ProviderTarget(
                 provider,
-                Model("scripted", "scripted", "scripted", Tier.STANDARD, 8_192),
+                Model("scripted", "scripted", "White Dwarfs", Tier.WHITE_DWARF, 8_192),
             ),
         )
 

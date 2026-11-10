@@ -50,9 +50,9 @@ fun ChatScreen(
     }
 
     Column(modifier = modifier.fillMaxSize()) {
-        state.model?.let { model ->
+        state.tier?.let { tier ->
             Text(
-                text = "Model: $model",
+                text = "Tier: $tier",
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
@@ -209,7 +209,7 @@ private fun Composer(
             value = value,
             onValueChange = onValueChange,
             modifier = Modifier.weight(1f),
-            placeholder = { Text("Describe the change…") },
+            placeholder = { Text("Describe the changeâ€¦") },
             enabled = enabled,
             maxLines = 5,
             textStyle = MaterialTheme.typography.bodyLarge,

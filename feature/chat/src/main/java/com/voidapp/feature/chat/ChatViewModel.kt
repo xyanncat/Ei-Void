@@ -39,7 +39,7 @@ data class ChatUiState(
     val repoFullName: String = "",
     val entries: List<ChatEntry> = emptyList(),
     val input: String = "",
-    val model: String? = null,
+    val tier: String? = null,
     val isRunning: Boolean = false,
     val pendingConfirmation: ConfirmationRequest? = null,
     val error: String? = null,
@@ -115,7 +115,7 @@ class ChatViewModel @Inject constructor(
             try {
                 engine.run(text, context).collect { event ->
                     when (event) {
-                        is AgentEvent.Thinking -> _state.update { it.copy(model = event.model) }
+                        is AgentEvent.Thinking -> _state.update { it.copy(tier = event.tier) }
                         is AgentEvent.Token -> {
                             assistant.append(event.text)
                             updateAssistant(assistant.toString())

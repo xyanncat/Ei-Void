@@ -5,6 +5,7 @@ import com.voidapp.core.ai.ChatChunk
 import com.voidapp.core.ai.ChatRequest
 import com.voidapp.core.ai.Model
 import com.voidapp.core.ai.Tier
+import com.voidapp.core.ai.models.ModelCatalog
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import org.junit.Assert.assertEquals
@@ -14,26 +15,16 @@ import org.junit.Test
 
 class SmartRouterTest {
 
-    private fun model(
-        id: String,
-        tier: Tier,
-        isFree: Boolean = false,
-        providerId: String = "openrouter",
-    ) = Model(
+    private fun model(id: String, tier: Tier, providerId: String = "nvidia") = Model(
         id = id,
         providerId = providerId,
-        displayName = id,
+        displayName = tier.displayName,
         tier = tier,
         contextWindow = 8_192,
-        isFree = isFree,
     )
 
-    private fun candidate(
-        id: String,
-        tier: Tier,
-        isFree: Boolean = false,
-        providerId: String = "openrouter",
-    ) = Candidate(FakeProvider(providerId), model(id, tier, isFree, providerId))
+    private fun candidate(id: String, tier: Tier, providerId: String = "nvidia") =
+        Candidate(FakeProvider(providerId), model(id, tier, providerId))
 
     @Test
     fun `tasks are classified from their wording`() {
@@ -47,65 +38,96 @@ class SmartRouterTest {
     }
 
     @Test
-    fun `an edit prefers a free fast model`() {
+    fun `a small edit goes to the smallest tier`() {
         val router = SmartRouter()
 
         val route = router.pick(
             "fix the typo",
             listOf(
-                candidate("strong/paid", Tier.STRONG),
-                candidate("standard/paid", Tier.STANDARD),
-                candidate("fast/free:free", Tier.FAST, isFree = true),
+                candidate("red", Tier.RED_DWARF),
+                candidate("white", Tier.WHITE_DWARF),
+                candidate("neutron", Tier.NEUTRON_STAR),
             ),
         )
 
-        assertEquals("fast/free:free", route?.model?.id)
+        assertEquals(Tier.NEUTRON_STAR, route?.model?.tier)
+        assertEquals("Neutron Stars", route?.tierName)
     }
 
     @Test
-    fun `the user's default model wins`() {
-        val router = SmartRouter(defaultModelId = { "standard/paid" })
+    fun `a review goes to the middle tier`() {
+        val router = SmartRouter()
 
         val route = router.pick(
-            "fix the typo",
+            "review the parser for bugs",
             listOf(
-                candidate("fast/free:free", Tier.FAST, isFree = true),
-                candidate("standard/paid", Tier.STANDARD),
+                candidate("red", Tier.RED_DWARF),
+                candidate("white", Tier.WHITE_DWARF),
+                candidate("neutron", Tier.NEUTRON_STAR),
             ),
         )
 
-        assertEquals("standard/paid", route?.model?.id)
-        assertTrue(route?.reason?.contains("default") == true)
+        assertEquals(Tier.WHITE_DWARF, route?.model?.tier)
     }
 
     @Test
-    fun `a complex task upgrades past the default model`() {
-        val router = SmartRouter(defaultModelId = { "fast/free:free" })
-
-        val route = router.pick(
-            "refactor the whole parser",
-            listOf(
-                candidate("fast/free:free", Tier.FAST, isFree = true),
-                candidate("strong/paid", Tier.STRONG),
-            ),
-        )
-
-        assertEquals("strong/paid", route?.model?.id)
-    }
-
-    @Test
-    fun `a scaffold task wants a strong model`() {
+    fun `scaffolding goes to the strongest tier`() {
         val router = SmartRouter()
 
         val route = router.pick(
             "scaffold a new module",
             listOf(
-                candidate("fast/free:free", Tier.FAST, isFree = true),
-                candidate("strong/paid", Tier.STRONG),
+                candidate("red", Tier.RED_DWARF),
+                candidate("white", Tier.WHITE_DWARF),
+                candidate("neutron", Tier.NEUTRON_STAR),
             ),
         )
 
-        assertEquals("strong/paid", route?.model?.id)
+        assertEquals(Tier.RED_DWARF, route?.model?.tier)
+    }
+
+    @Test
+    fun `the user's tier wins over the task`() {
+        val router = SmartRouter(preferredTier = { Tier.RED_DWARF })
+
+        val route = router.pick(
+            "fix the typo",
+            listOf(
+                candidate("red", Tier.RED_DWARF),
+                candidate("neutron", Tier.NEUTRON_STAR),
+            ),
+        )
+
+        assertEquals(Tier.RED_DWARF, route?.model?.tier)
+        assertTrue(route?.reason?.contains("chosen") == true)
+    }
+
+    @Test
+    fun `an unavailable tier falls back to a stronger one, not a weaker one`() {
+        val router = SmartRouter(preferredTier = { Tier.RED_DWARF })
+
+        val route = router.pick(
+            "fix the typo",
+            listOf(candidate("neutron", Tier.NEUTRON_STAR)),
+        )
+
+        assertEquals(Tier.NEUTRON_STAR, route?.model?.tier)
+    }
+
+    @Test
+    fun `the best model inside a tier wins`() {
+        val router = SmartRouter()
+
+        val route = router.pick(
+            "fix the typo",
+            listOf(
+                // The catalog ranks North Mini Code (7) below Laguna XS (6).
+                candidate("cohere/north-mini-code:free", Tier.NEUTRON_STAR, "openrouter"),
+                candidate("poolside/laguna-xs-2.1", Tier.NEUTRON_STAR, "nvidia"),
+            ),
+        )
+
+        assertEquals("poolside/laguna-xs-2.1", route?.model?.id)
     }
 
     @Test
@@ -115,8 +137,8 @@ class SmartRouterTest {
         val route = router.next(
             "fix the typo",
             listOf(
-                candidate("a/one", Tier.FAST, providerId = "provider-a"),
-                candidate("b/two", Tier.FAST, providerId = "provider-b"),
+                candidate("a/one", Tier.NEUTRON_STAR, providerId = "provider-a"),
+                candidate("b/two", Tier.NEUTRON_STAR, providerId = "provider-b"),
             ),
             failed = setOf("provider-a"),
         )
@@ -132,12 +154,24 @@ class SmartRouterTest {
     }
 
     @Test
-    fun `the model catalog guesses the tier and the free flag`() {
-        assertEquals(Tier.FAST, com.voidapp.core.ai.models.ModelCatalog.tierFor("vendor/gpt-4o-mini"))
-        assertEquals(Tier.STRONG, com.voidapp.core.ai.models.ModelCatalog.tierFor("vendor/claude-opus-4"))
-        assertEquals(Tier.STANDARD, com.voidapp.core.ai.models.ModelCatalog.tierFor("vendor/mystery-1"))
-        assertTrue(com.voidapp.core.ai.models.ModelCatalog.isFree("vendor/model:free"))
-        assertTrue(com.voidapp.core.ai.models.ModelCatalog.isFree("vendor/model", providerIsFree = true))
+    fun `the catalog maps every model to a tier`() {
+        assertEquals(7, ModelCatalog.all.size)
+        assertEquals(Tier.RED_DWARF, ModelCatalog.all.first().tier)
+        assertEquals(Tier.NEUTRON_STAR, ModelCatalog.all.last().tier)
+
+        // Every tier has at least one model.
+        Tier.entries.forEach { tier ->
+            assertTrue("no model for $tier", ModelCatalog.forTier(tier).isNotEmpty())
+        }
+    }
+
+    @Test
+    fun `a model keeps the tier name as its display name`() {
+        val entry = ModelCatalog.find("deepseek-ai/deepseek-v4.1-flash", "nvidia")!!
+        val model = ModelCatalog.toModel(entry)
+
+        assertEquals("Red Dwarfs", model.displayName)
+        assertEquals("deepseek-ai/deepseek-v4.1-flash", model.id)
     }
 
     private class FakeProvider(override val id: String) : AiProvider {

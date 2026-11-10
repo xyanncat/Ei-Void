@@ -1,16 +1,32 @@
 package com.voidapp.core.ai
 
-import kotlinx.serialization.json.JsonObject
 import kotlinx.coroutines.flow.Flow
+import kotlinx.serialization.json.JsonObject
 
-/** How heavy a model is. The router picks a tier from the task. */
-enum class Tier { FAST, STANDARD, STRONG }
+/**
+ * The three tiers Void exposes. The provider's model name is an
+ * implementation detail: the app, the chat and the settings only ever show
+ * the tier.
+ *
+ * [rank] orders quality: the lower the number, the stronger the tier.
+ */
+enum class Tier(val displayName: String, val rank: Int) {
+    RED_DWARF("Red Dwarfs", 0),
+    WHITE_DWARF("White Dwarfs", 1),
+    NEUTRON_STAR("Neutron Stars", 2),
+    ;
+
+    /** True when this tier is at least as strong as [other]. */
+    fun isAtLeast(other: Tier): Boolean = rank <= other.rank
+}
 
 enum class Role { SYSTEM, USER, ASSISTANT, TOOL }
 
 data class Model(
+    /** The provider's model id. Never shown to the user. */
     val id: String,
     val providerId: String,
+    /** What the user sees: the tier name. */
     val displayName: String,
     val tier: Tier,
     val contextWindow: Int,

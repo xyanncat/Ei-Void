@@ -63,7 +63,7 @@ class AgentEngine(
         if (plan.isNotEmpty()) {
             emit(AgentEvent.PlanUpdated(plan))
         }
-        emit(AgentEvent.Thinking(route.model.id, route.reason))
+        emit(AgentEvent.Thinking(route.tierName, route.reason))
 
         val messages = mutableListOf(
             ChatMessage(
@@ -103,7 +103,7 @@ class AgentEngine(
                 }
                 failedProviders += route.providerId
                 route = fallback
-                emit(AgentEvent.Thinking(route.model.id, route.reason))
+                emit(AgentEvent.Thinking(route.tierName, route.reason))
                 continue
             }
 

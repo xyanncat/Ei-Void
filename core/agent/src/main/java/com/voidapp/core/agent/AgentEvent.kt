@@ -4,8 +4,8 @@ import com.voidapp.core.ai.ToolCall
 
 /** Everything the engine reports while it works. */
 sealed interface AgentEvent {
-    /** The engine picked a model. [reason] explains why. */
-    data class Thinking(val model: String, val reason: String) : AgentEvent
+    /** The engine picked a tier. [reason] explains why. */
+    data class Thinking(val tier: String, val reason: String) : AgentEvent
 
     /** A piece of the assistant's answer. */
     data class Token(val text: String) : AgentEvent

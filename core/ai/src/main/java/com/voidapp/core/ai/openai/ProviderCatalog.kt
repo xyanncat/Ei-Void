@@ -1,11 +1,10 @@
 package com.voidapp.core.ai.openai
 
 /**
- * The providers Void ships with.
+ * The providers Void talks to. The models themselves come from
+ * `ModelCatalog`, which maps them to the three tiers.
  *
- * `KIRA` and `NARA` still need their base URL and model id confirmed with the
- * user; without a default model they stay unusable until the user names a
- * model for them in Settings.
+ * `KIRA` still needs its base URL confirmed with the user.
  */
 object ProviderCatalog {
 
@@ -18,21 +17,12 @@ object ProviderCatalog {
             "X-Title" to "Void",
         ),
         freeModelSuffix = ":free",
-        // Free tier model; the user can override it in Settings.
-        defaultModelId = "meta-llama/llama-3.3-70b-instruct:free",
     )
 
     val NVIDIA = OpenAiConfig(
         providerId = "nvidia",
         displayName = "NVIDIA NIM",
         baseUrl = "https://integrate.api.nvidia.com/v1",
-        defaultModelId = "meta/llama-3.1-8b-instruct",
-    )
-
-    val KIRA = OpenAiConfig(
-        providerId = "kira",
-        displayName = "Kira AI",
-        baseUrl = "https://api.kira.ai/v1", // TODO(user): confirm with the provider
     )
 
     val NARA = OpenAiConfig(
@@ -41,7 +31,13 @@ object ProviderCatalog {
         baseUrl = "https://api.nara.ai/v1", // TODO(user): confirm with the provider
     )
 
-    val all: List<OpenAiConfig> = listOf(OPENROUTER, NVIDIA, KIRA, NARA)
+    val KIRA = OpenAiConfig(
+        providerId = "kira",
+        displayName = "Kira AI",
+        baseUrl = "https://api.kira.ai/v1", // TODO(user): confirm with the provider
+    )
+
+    val all: List<OpenAiConfig> = listOf(OPENROUTER, NVIDIA, NARA, KIRA)
 
     fun byId(providerId: String): OpenAiConfig? = all.firstOrNull { it.providerId == providerId }
 }

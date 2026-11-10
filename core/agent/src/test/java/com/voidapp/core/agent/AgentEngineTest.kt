@@ -46,7 +46,7 @@ class AgentEngineTest {
         id = id,
         providerId = "scripted",
         displayName = id,
-        tier = Tier.STANDARD,
+        tier = Tier.WHITE_DWARF,
         contextWindow = 8_192,
     )
 

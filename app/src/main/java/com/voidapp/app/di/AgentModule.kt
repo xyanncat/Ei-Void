@@ -53,7 +53,7 @@ abstract class AgentModule {
         ): AgentEngine = AgentEngine(
             registry = registry,
             resolver = resolver,
-            router = SmartRouter(defaultModelId = { settingsStore.defaultModel.value }),
+            router = SmartRouter(preferredTier = { settingsStore.preferredTier.value }),
             contextManager = ContextManager(),
             planner = Planner(),
             limits = AgentLimits(),

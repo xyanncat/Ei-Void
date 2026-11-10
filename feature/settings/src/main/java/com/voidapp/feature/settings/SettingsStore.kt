@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.voidapp.core.ai.Tier
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,11 +16,15 @@ import kotlinx.coroutines.launch
 enum class ThemeMode { SYSTEM, LIGHT, DARK }
 
 interface SettingsStore {
-    val defaultModel: StateFlow<String?>
     val theme: StateFlow<ThemeMode>
 
-    fun setDefaultModel(modelId: String)
+    /**
+     * The tier the user wants, or null for "let the router decide".
+     */
+    val preferredTier: StateFlow<Tier?>
+
     fun setTheme(mode: ThemeMode)
+    fun setPreferredTier(tier: Tier?)
 }
 
 private val Context.settingsDataStore: DataStore<Preferences> by
@@ -41,26 +46,24 @@ class DataStoreSettingsStore(
     private val scope: CoroutineScope,
 ) : SettingsStore {
 
-    private val _defaultModel = MutableStateFlow<String?>(null)
-    override val defaultModel: StateFlow<String?> = _defaultModel.asStateFlow()
-
     private val _theme = MutableStateFlow(ThemeMode.SYSTEM)
     override val theme: StateFlow<ThemeMode> = _theme.asStateFlow()
+
+    private val _preferredTier = MutableStateFlow<Tier?>(null)
+    override val preferredTier: StateFlow<Tier?> = _preferredTier.asStateFlow()
 
     init {
         scope.launch {
             dataStore.data.collect { preferences ->
-                preferences[DEFAULT_MODEL]?.let { _defaultModel.value = it }
                 preferences[THEME]
                     ?.let { stored -> ThemeMode.entries.firstOrNull { it.name == stored } }
                     ?.let { _theme.value = it }
+
+                preferences[PREFERRED_TIER]
+                    ?.let { stored -> Tier.entries.firstOrNull { it.name == stored } }
+                    ?.let { _preferredTier.value = it }
             }
         }
-    }
-
-    override fun setDefaultModel(modelId: String) {
-        _defaultModel.value = modelId
-        scope.launch { dataStore.edit { it[DEFAULT_MODEL] = modelId } }
     }
 
     override fun setTheme(mode: ThemeMode) {
@@ -68,8 +71,21 @@ class DataStoreSettingsStore(
         scope.launch { dataStore.edit { it[THEME] = mode.name } }
     }
 
+    override fun setPreferredTier(tier: Tier?) {
+        _preferredTier.value = tier
+        scope.launch {
+            dataStore.edit { preferences ->
+                if (tier == null) {
+                    preferences.remove(PREFERRED_TIER)
+                } else {
+                    preferences[PREFERRED_TIER] = tier.name
+                }
+            }
+        }
+    }
+
     private companion object {
-        val DEFAULT_MODEL = stringPreferencesKey("default_model")
         val THEME = stringPreferencesKey("theme")
+        val PREFERRED_TIER = stringPreferencesKey("preferred_tier")
     }
 }
