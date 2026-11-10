@@ -32,7 +32,8 @@ dependencies {
     implementation(libs.coroutines.core)
     implementation(libs.coroutines.android)
     implementation(libs.ktor.client.core)
-    implementation(libs.kotlinx.serialization.json)
+    // ToolCall/ToolDefinition expose JsonObject in this module's public API.
+    api(libs.kotlinx.serialization.json)
 
     testImplementation(libs.junit)
     testImplementation(libs.coroutines.test)

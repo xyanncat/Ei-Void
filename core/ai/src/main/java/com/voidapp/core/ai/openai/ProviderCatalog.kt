@@ -3,9 +3,9 @@ package com.voidapp.core.ai.openai
 /**
  * The providers Void ships with.
  *
- * `KIRA` and `NARA` still need their base URL confirmed with the user; the
- * values below are placeholders and only matter once a key for that provider
- * is stored.
+ * `KIRA` and `NARA` still need their base URL and model id confirmed with the
+ * user; without a default model they stay unusable until the user names a
+ * model for them in Settings.
  */
 object ProviderCatalog {
 
@@ -18,12 +18,15 @@ object ProviderCatalog {
             "X-Title" to "Void",
         ),
         freeModelSuffix = ":free",
+        // Free tier model; the user can override it in Settings.
+        defaultModelId = "meta-llama/llama-3.3-70b-instruct:free",
     )
 
     val NVIDIA = OpenAiConfig(
         providerId = "nvidia",
         displayName = "NVIDIA NIM",
         baseUrl = "https://integrate.api.nvidia.com/v1",
+        defaultModelId = "meta/llama-3.1-8b-instruct",
     )
 
     val KIRA = OpenAiConfig(

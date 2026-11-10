@@ -14,6 +14,11 @@ data class OpenAiConfig(
     val extraHeaders: Map<String, String> = emptyMap(),
     /** Suffix that marks a free model, e.g. `:free` on OpenRouter. */
     val freeModelSuffix: String? = null,
+    /**
+     * The model to use when the user has not picked one. Null means the
+     * provider cannot be used until the user names a model for it.
+     */
+    val defaultModelId: String? = null,
 ) {
     val chatCompletionsUrl: String get() = baseUrl.trimEnd('/') + "/chat/completions"
     val modelsUrl: String get() = baseUrl.trimEnd('/') + "/models"

@@ -24,6 +24,8 @@ data class AgentLimits(
     val maxOutputTokens: Int = 32_000,
     /** How long one tool call may take. */
     val toolTimeoutMillis: Long = 60_000,
+    /** How long the user has to answer a confirmation. */
+    val confirmationTimeoutMillis: Long = 300_000,
 )
 
 /**
@@ -158,12 +160,22 @@ class AgentEngine(
         emit(AgentEvent.Failed("The agent stopped after ${limits.maxIterations} steps."))
     }
 
+    /**
+     * Runs a tool. A tool that needs the user's confirmation gets a longer
+     * window, because the timeout covers the wait for the answer.
+     */
     private suspend fun runTool(call: ToolCall, ctx: ToolContext): ToolResult = try {
-        withTimeout(limits.toolTimeoutMillis) {
+        val needsConfirmation = registry.get(call.name)?.requiresConfirmation == true
+        val timeout = if (needsConfirmation) {
+            limits.confirmationTimeoutMillis
+        } else {
+            limits.toolTimeoutMillis
+        }
+        withTimeout(timeout) {
             registry.execute(call.name, call.arguments, ctx)
         }
     } catch (error: TimeoutCancellationException) {
-        ToolResult.Error("${call.name} timed out after ${limits.toolTimeoutMillis} ms")
+        ToolResult.Error("${call.name} timed out")
     } catch (error: Exception) {
         ToolResult.Error(error.message ?: "${call.name} failed")
     }

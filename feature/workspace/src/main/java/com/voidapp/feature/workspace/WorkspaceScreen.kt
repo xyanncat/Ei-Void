@@ -37,11 +37,12 @@ import java.util.Date
 @Composable
 fun WorkspaceScreen(
     onExit: () -> Unit,
+    modifier: Modifier = Modifier,
     viewModel: WorkspaceViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(modifier = modifier.fillMaxSize()) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,

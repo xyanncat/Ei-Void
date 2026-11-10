@@ -20,10 +20,10 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.voidapp.app.ui.WorkspaceRoute
 import com.voidapp.feature.auth.LoginScreen
 import com.voidapp.feature.repos.ReposScreen
 import com.voidapp.feature.settings.SettingsScreen
-import com.voidapp.feature.workspace.WorkspaceScreen
 
 private const val ROUTE_ONBOARDING = "onboarding"
 private const val ROUTE_REPOS = "repos"
@@ -105,7 +105,7 @@ fun VoidNavHost() {
                     },
                 ),
             ) {
-                WorkspaceScreen(onExit = { navController.popBackStack() })
+                WorkspaceRoute(onExit = { navController.popBackStack() })
             }
 
             composable(ROUTE_SETTINGS) {
