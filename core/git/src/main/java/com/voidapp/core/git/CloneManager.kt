@@ -10,6 +10,11 @@ import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.lib.ProgressMonitor
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider
 
+data class CloneProgress(
+    val percent: Int,
+    val message: String,
+)
+
 /**
  * Shallow-clones a repository into `workspaceRoot/<owner>/<name>`.
  *
@@ -18,9 +23,9 @@ import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider
 class CloneManager(
     private val workspaceRoot: File,
     private val remoteUrlFor: (Repo) -> String = { "https://github.com/${it.fullName}.git" },
-) : GitClient {
+) {
 
-    override suspend fun clone(
+    suspend fun clone(
         repo: Repo,
         token: String,
         onProgress: (CloneProgress) -> Unit,
