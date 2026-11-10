@@ -1,11 +1,16 @@
 package com.voidapp.app.di
 
 import android.content.Context
+import androidx.room.Room
 import com.voidapp.app.BuildConfig
+import com.voidapp.core.common.github.GitHubApi
 import com.voidapp.core.common.github.GitHubAuthApi
 import com.voidapp.core.common.github.KtorGitHubAuthApi
+import com.voidapp.core.common.github.KtorGitHubApi
 import com.voidapp.core.common.network.NetworkModule
 import com.voidapp.core.common.network.PinConfig
+import com.voidapp.core.database.RepoDao
+import com.voidapp.core.database.VoidDatabase
 import com.voidapp.core.security.EncryptedSecretStore
 import com.voidapp.core.security.SecretStore
 import dagger.Module
@@ -40,4 +45,17 @@ object AppModule {
     @Singleton
     fun provideGitHubAuthApi(client: HttpClient): GitHubAuthApi =
         KtorGitHubAuthApi(client, BuildConfig.GITHUB_CLIENT_ID)
+
+    @Provides
+    @Singleton
+    fun provideGitHubApi(client: HttpClient, secretStore: SecretStore): GitHubApi =
+        KtorGitHubApi(client, secretStore)
+
+    @Provides
+    @Singleton
+    fun provideDatabase(@ApplicationContext context: Context): VoidDatabase =
+        Room.databaseBuilder(context, VoidDatabase::class.java, "void.db").build()
+
+    @Provides
+    fun provideRepoDao(database: VoidDatabase): RepoDao = database.repoDao()
 }

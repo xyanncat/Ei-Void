@@ -28,10 +28,8 @@ android {
 
 dependencies {
     implementation(libs.androidx.core.ktx)
-    implementation(libs.room.runtime)
+    api(libs.room.runtime)
     implementation(libs.room.ktx)
-    implementation(libs.sqlcipher)
-    implementation(libs.androidx.sqlite)
     implementation(libs.coroutines.core)
     ksp(libs.room.compiler)
 

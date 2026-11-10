@@ -25,11 +25,13 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.voidapp.feature.auth.LoginScreen
+import com.voidapp.feature.repos.ReposScreen
 import androidx.navigation.compose.rememberNavController
 
 private const val ROUTE_ONBOARDING = "onboarding"
 private const val ROUTE_REPOS = "repos"
 private const val ROUTE_SETTINGS = "settings"
+private const val ROUTE_WORKSPACE = "workspace/{owner}/{name}"
 
 private data class Destination(val route: String, val label: String, val icon: ImageVector)
 
@@ -84,7 +86,19 @@ fun VoidNavHost() {
                 )
             }
             composable(ROUTE_REPOS) {
-                Placeholder("Repositories", "Sign in with GitHub to list your repos.")
+                ReposScreen(
+                    onOpenRepo = { repo ->
+                        navController.navigate("workspace/${repo.owner}/${repo.name}")
+                    },
+                )
+            }
+            composable(ROUTE_WORKSPACE) { entry ->
+                val owner = entry.arguments?.getString("owner").orEmpty()
+                val name = entry.arguments?.getString("name").orEmpty()
+                Placeholder(
+                    title = "$owner/$name",
+                    body = "Opening this repository's workspace…",
+                )
             }
             composable(ROUTE_SETTINGS) {
                 Placeholder("Settings", "Provider keys, default model and theme.")

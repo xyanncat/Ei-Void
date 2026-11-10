@@ -30,6 +30,7 @@ dependencies {
     // Part of this module's public API (NetworkModule returns these types).
     api(libs.okhttp)
     api(libs.ktor.client.core)
+    api(project(":core:security"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.coroutines.core)
