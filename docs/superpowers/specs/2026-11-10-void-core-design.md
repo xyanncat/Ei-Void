@@ -37,7 +37,10 @@ The agent is a local **tool-use loop**: the model chooses tools, the app execute
 | minSdk / targetSdk / compileSdk | 35 / 35 / 35 |
 | ABI | arm64-v8a only |
 | Storage | app-private, no permissions |
+| Permissions | `INTERNET` only |
+| Transport | TLS 1.3 only, certificate pinning, no cleartext |
 | AI | user-provided API keys only |
+| Analytics | none — no third-party SDKs |
 | Offline | workspace browsable, agent unavailable |
 
 ## 5. Module structure
@@ -327,20 +330,72 @@ Tokens are defined in `designsystem/theme/Color.kt` as primitive scales and mapp
 
 Single-activity, `Navigation Compose`. Bottom nav for the three top-level destinations (Repos, Workspace, Settings); onboarding/login shown as a gated start destination.
 
-## 11. Persistence & security
+## 11. Security & privacy
 
-| Data | Store |
+### 11.1 Principles
+
+- **No backend, no middleman.** Void has no server. The only network peers are GitHub and the user's chosen AI providers, over direct TLS. There is no Void service that can read user data.
+- **Least data.** Store only what the feature needs. No analytics, no telemetry, no crash reporting, no third-party SDKs.
+- **Encrypt by default.** Keys, tokens, sessions, and the database are encrypted at rest. All transport is TLS 1.3.
+- **User control.** Logout wipes local secrets; the user can clear all data at any time.
+
+**On "end-to-end encryption":** true E2EE with a third-party AI provider is not possible — the provider must read the prompt to answer. The guarantee Void offers is therefore: **no middleman** (no backend), **encrypted transport** (TLS 1.3 + certificate pinning), **encrypted local storage** (Keystore-backed keys, SQLCipher database), and **the user holds the keys**. Nothing is sent anywhere except directly to the user's chosen provider or GitHub.
+
+### 11.2 Transport security
+
+- **TLS 1.3 only**; cleartext traffic disabled app-wide via `network_security_config.xml`.
+- **Certificate pinning** for GitHub API, GitHub git endpoints, and each configured AI provider. Pins are bundled in a single reviewable config file and rotatable; a pin failure surfaces a clear error instead of silently falling back.
+- **DNS-over-HTTPS** (on by default) to prevent DNS snooping.
+- No custom CA trust beyond the system store; no proxy bypass.
+- Minimal `User-Agent`; no tracking headers.
+
+### 11.3 At-rest encryption
+
+| Data | Protection |
 |---|---|
-| Repos, sessions, messages | Room |
-| Settings (defaults, theme) | DataStore |
-| OAuth token, API keys | EncryptedSharedPreferences |
-| Workspace files | App-private filesystem |
-| Conversation backup | JSON per session |
+| OAuth token, API keys | `EncryptedSharedPreferences` (AES-256-GCM, Android Keystore) |
+| Sessions, messages, repos | Room via **SQLCipher** (encrypted database file) |
+| Conversation backup | Encrypted JSON (AES-256-GCM, key in Keystore) |
+| Settings | DataStore (app-private) |
+| Workspace files | App-private filesystem (Android sandbox + device encryption) |
 
-Security rules:
-- No keys/tokens in logs, crash reports, or analytics
-- Tokens never leaves the device except to their provider/GitHub
-- Screens containing keys are excluded from screenshots/recents (`FLAG_SECURE` on the provider config screen)
+Workspace files are not individually encrypted: they must stay readable by JGit and the agent, and the app-private directory is already protected by the Android sandbox and device encryption. Full workspace encryption is deferred (see risks).
+
+### 11.4 App access control
+
+- **Biometric / PIN app lock** (optional, default on once a repo is linked), with a configurable timeout.
+- **Auto-lock** when the app is backgrounded beyond the timeout.
+- `FLAG_SECURE` on login, provider-key, and workspace screens — blocks screenshots and recents thumbnails.
+- **Clipboard hygiene:** pasted keys are cleared from the clipboard after entry.
+- Sensitive fields disable autofill and keyboard learning.
+
+### 11.5 Privacy
+
+- **Zero analytics / telemetry / crash reporting.** No third-party SDKs at all.
+- **Permissions:** `INTERNET` only. No contacts, location, storage, or phone permissions.
+- **No ads, no trackers.**
+- **Transparency:** the app is open-source; the privacy policy states exactly what is stored and where.
+- **On-device only:** conversations and code never leave the device except as encrypted TLS to the user's chosen provider or GitHub.
+
+### 11.6 Build & code security
+
+- R8/ProGuard obfuscation enabled for release builds.
+- No secrets in the APK. The OAuth client ID is public by design (device flow needs no client secret); no API keys are bundled.
+- Release APKs signed with an upload key; SHA-256 published in the README.
+- Dependency vulnerability scanning via Dependabot / Gradle dependency checks.
+- Certificate pin digests stored in a single, reviewable config file.
+
+### 11.7 Git credential security
+
+- The OAuth token is used only for GitHub HTTPS operations and is **never written to git config on disk**.
+- A per-operation `CredentialsProvider` supplies it in memory.
+- Logout revokes the token (where supported) and wipes local secrets.
+
+### 11.8 Data lifecycle
+
+- **Logout:** wipe tokens, keys, sessions, and cached repos.
+- **Delete all data:** a Settings action clears the database, workspace, and secrets.
+- **Token expiry:** refresh or prompt re-login; never silently retry with stale credentials.
 
 ## 12. Error handling & offline
 
@@ -371,15 +426,16 @@ Test doubles: `FakeAiProvider`, `FakeGitClient`, in-memory workspace.
 ## 15. Milestones
 
 1. **Scaffold** — Gradle modules, theme tokens, navigation shell, Hilt
-2. **Security + settings** — EncryptedSharedPreferences, DataStore, provider config UI
-3. **GitHub auth** — device flow, token storage, repo listing
+2. **Security foundation + settings** — EncryptedSharedPreferences, SQLCipher, DataStore, provider config UI
+3. **GitHub auth** — device flow, token storage, repo listing, certificate pinning
 4. **Workspace + git** — clone, file tree, read/write, diff, commit, push
-5. **AI provider layer** — adapters, smart router, streaming
+5. **AI provider layer** — adapters, smart router, streaming, TLS/pinning
 6. **Agent engine** — tool-use loop, tools, context, planner, guardrails
 7. **Chat UI** — conversation, streaming, tool-call cards, diff cards
 8. **Editor** — code view, diff view
 9. **Integration + testing** — end-to-end run against a throwaway repo
-10. **Build + distribution** — GitHub Actions, signed APK, Release
+10. **Security hardening & privacy audit** — biometric lock, FLAG_SECURE, clipboard hygiene, R8, dependency scan, pin-rotation process
+11. **Build + distribution** — GitHub Actions, signed APK, Release
 
 ## 16. Risks & open questions
 
@@ -390,6 +446,9 @@ Test doubles: `FakeAiProvider`, `FakeGitClient`, in-memory workspace.
 | Provider API drift | Adapter interface isolates changes; version-pinned models |
 | OAuth app review / rate limits | Device flow is standard; handle polling errors gracefully |
 | Agent loops away on bad tasks | Max iterations, planner, user-visible plan, stop button |
+| Certificate pinning breakage on provider/GitHub rotation | Pins bundled in a reviewable config; documented pin-rotation release process |
+| SQLCipher APK size / startup cost | Accept for v1; measure during security audit |
+| Biometric lock friction | Optional; configurable timeout |
 
 Open questions (to resolve during planning):
 - Exact model catalog per provider at build time
