@@ -4,6 +4,7 @@ import com.voidapp.core.ai.AiProvider
 import com.voidapp.core.ai.Model
 import com.voidapp.core.ai.Tier
 import com.voidapp.core.ai.models.ModelCatalog
+import com.voidapp.core.ai.plan.Plan
 
 /** A model the user can reach right now. */
 data class Candidate(
@@ -32,24 +33,28 @@ data class Route(
  * - Reviews and refactors go to White Dwarfs (middle).
  * - Scaffolding goes to Red Dwarfs (high).
  *
- * When the user picked a tier explicitly, that tier wins; when it is
- * unavailable the router takes the closest stronger one, never a weaker one.
+ * The subscription plan filters the candidates first: a tier the plan does
+ * not include is never chosen, and the task falls to the best tier the plan
+ * does include.
  */
 class SmartRouter(
     private val classifier: TaskClassifier = TaskClassifier(),
     /** The tier the user chose in Settings; null means "decide for me". */
     private val preferredTier: () -> Tier? = { null },
+    /** The plan that decides which tiers are reachable. */
+    private val plan: () -> Plan = { Plan.FREE },
 ) {
 
     fun classify(task: String): TaskKind = classifier.classify(task)
 
     /** The model to use, or null when no provider is reachable. */
     fun pick(task: String, candidates: List<Candidate>): Route? {
-        if (candidates.isEmpty()) return null
+        val reachable = reachable(candidates)
+        if (reachable.isEmpty()) return null
 
         val kind = classify(task)
-        val wanted = preferredTier() ?: tierFor(kind)
-        val ranked = rank(wanted, candidates)
+        val wanted = wantedTier(kind)
+        val ranked = rank(wanted, reachable)
 
         val chosen = ranked.first()
         return Route(
@@ -66,8 +71,8 @@ class SmartRouter(
      */
     fun next(task: String, candidates: List<Candidate>, failedKeys: Set<String>): Route? {
         val kind = classify(task)
-        val wanted = preferredTier() ?: tierFor(kind)
-        return rank(wanted, candidates)
+        val wanted = wantedTier(kind)
+        return rank(wanted, reachable(candidates))
             .firstOrNull { candidateKey(it) !in failedKeys }
             ?.let {
                 Route(
@@ -86,6 +91,18 @@ class SmartRouter(
         TaskKind.EXPLAIN, TaskKind.EDIT -> Tier.NEUTRON_STAR
         TaskKind.REVIEW, TaskKind.REFACTOR -> Tier.WHITE_DWARF
         TaskKind.SCAFFOLD -> Tier.RED_DWARF
+    }
+
+    private fun wantedTier(kind: TaskKind): Tier {
+        val current = plan()
+        preferredTier()?.takeIf { current.allows(it) }?.let { return it }
+        val natural = tierFor(kind)
+        return if (current.allows(natural)) natural else current.bestTier
+    }
+
+    private fun reachable(candidates: List<Candidate>): List<Candidate> {
+        val current = plan()
+        return candidates.filter { current.allows(it.model.tier) }
     }
 
     private fun rank(wanted: Tier, candidates: List<Candidate>): List<Candidate> {

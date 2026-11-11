@@ -24,10 +24,12 @@ import com.voidapp.app.ui.WorkspaceRoute
 import com.voidapp.feature.auth.LoginScreen
 import com.voidapp.feature.repos.ReposScreen
 import com.voidapp.feature.settings.SettingsScreen
+import com.voidapp.feature.settings.UsageScreen
 
 private const val ROUTE_ONBOARDING = "onboarding"
 private const val ROUTE_REPOS = "repos"
 private const val ROUTE_SETTINGS = "settings"
+private const val ROUTE_USAGE = "usage"
 private const val ROUTE_WORKSPACE = "workspace/{owner}/{name}/{branch}"
 
 private data class Destination(val route: String, val label: String, val icon: ImageVector)
@@ -119,7 +121,12 @@ fun VoidNavHost() {
                             launchSingleTop = true
                         }
                     },
+                    onOpenUsage = { navController.navigate(ROUTE_USAGE) },
                 )
+            }
+
+            composable(ROUTE_USAGE) {
+                UsageScreen(onBack = { navController.popBackStack() })
             }
         }
     }

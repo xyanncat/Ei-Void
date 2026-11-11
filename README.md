@@ -30,25 +30,15 @@ the middle: the only network peers are GitHub and the AI provider you choose.
 
 <br/>
 
-## Three tiers, not seven model names
+## Three tiers
 
 The router reads the task and picks a tier. You can override it in Settings.
 
-| Tier | When | Powers |
+| Tier | When | Character |
 |---|---|---|
 | **Red Dwarfs** | scaffolding, broad changes | strongest reasoning |
 | **White Dwarfs** | reviews, refactors | balanced |
 | **Neutron Stars** | explanations, small edits | smallest and fastest |
-
-Under the hood — the app never shows these — the catalog is:
-
-| Tier | Model | Provider |
-|---|---|---|
-| Red Dwarfs | `minimaxai/minimax-m3.1-flash` | NVIDIA NIM |
-| White Dwarfs | `stepfun-ai/step-5-preview` | NVIDIA NIM |
-| Neutron Stars | `nvidia/nemotron-3-ultra-550b-a55b` | OpenRouter |
-| Neutron Stars | `poolside/laguna-xs-2.1` | NVIDIA NIM |
-| Neutron Stars | `cohere/north-mini-code:free` | OpenRouter |
 
 A model that fails or does not answer is skipped for the next one **in the same
 tier** before the router ever moves down a tier. Every model call has a 45 s
@@ -56,28 +46,19 @@ budget; every tool call has its own.
 
 <br/>
 
-## How it is built
+## Plans
 
-```mermaid
-flowchart LR
-    UI["Compose UI<br/>chat · files · settings"] --> VM["ViewModels"]
-    VM --> Engine["Agent engine<br/>bounded tool loop"]
-    Engine --> Router["Smart router<br/>task → tier"]
-    Router --> OR["OpenRouter"]
-    Router --> NIM["NVIDIA NIM"]
-    Router --> NARA["Nara Router"]
-    Engine --> Tools["Tools<br/>files · git · repos"]
-    Tools --> WS["Workspace<br/>path-safe files"]
-    Tools --> Git["JGit"]
-    Tools --> GH["GitHub API"]
-    WS --> Disk[("repository<br/>on the phone")]
-    Git --> Disk
-    VM --> DB[("Room")]
-```
+| | Free | Pro | Max |
+|---|---|---|---|
+| **Price** | ₹0 | ₹200 / month | ₹500 / month |
+| **Projects** | 7 | 15 | 30 |
+| **Tokens / month** | 30M | 80M | 200M |
+| **Neutron Stars** | ✓ | ✓ | ✓ |
+| **White Dwarfs** | — | 5× | 10× |
+| **Red Dwarfs** | — | 2× | 5× |
 
-Ten Gradle modules: `core:{common, security, database, git, workspace, ai, agent}`,
-`feature:{auth, repos, workspace, chat, settings}`, plus `designsystem` and `app`.
-Kotlin 2.0, Compose, Hilt, Coroutines/Flow, Ktor, Room, JGit, kotlinx.serialization.
+The tier multipliers decide how much of the monthly token budget each tier may
+use. Usage is counted per tier and shown on the app's usage page.
 
 <br/>
 

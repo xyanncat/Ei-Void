@@ -11,6 +11,7 @@ import com.voidapp.core.common.network.NetworkModule
 import com.voidapp.core.common.network.PinConfig
 import com.voidapp.core.database.ChatDao
 import com.voidapp.core.database.RepoDao
+import com.voidapp.core.database.UsageDao
 import com.voidapp.core.database.VoidDatabase
 import com.voidapp.core.git.CloneManager
 import com.voidapp.core.git.GitClient
@@ -74,6 +75,9 @@ object AppModule {
 
     @Provides
     fun provideChatDao(database: VoidDatabase): ChatDao = database.chatDao()
+
+    @Provides
+    fun provideUsageDao(database: VoidDatabase): UsageDao = database.usageDao()
 
     @Provides
     @Singleton

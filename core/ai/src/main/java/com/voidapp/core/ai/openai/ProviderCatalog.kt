@@ -40,13 +40,7 @@ object ProviderCatalog {
         baseUrl = "https://router.bynara.id/v1",
     )
 
-    val KIRA = OpenAiConfig(
-        providerId = "kira",
-        displayName = "Kira AI",
-        baseUrl = "https://api.kira.ai/v1", // TODO(user): confirm with the provider
-    )
-
-    val all: List<OpenAiConfig> = listOf(OPENROUTER, NVIDIA, NARA, KIRA)
+    val all: List<OpenAiConfig> = listOf(OPENROUTER, NVIDIA, NARA)
 
     fun byId(providerId: String): OpenAiConfig? = all.firstOrNull { it.providerId == providerId }
 }

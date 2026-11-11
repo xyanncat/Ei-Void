@@ -29,6 +29,7 @@ import com.voidapp.core.ai.Tier
 @Composable
 fun SettingsScreen(
     onLoggedOut: () -> Unit,
+    onOpenUsage: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val theme by viewModel.theme.collectAsStateWithLifecycle()
@@ -79,6 +80,9 @@ fun SettingsScreen(
                         label = { Text(tier.displayName) },
                     )
                 }
+            }
+            OutlinedButton(onClick = onOpenUsage) {
+                Text("Plan & usage")
             }
             TierSummary()
         }

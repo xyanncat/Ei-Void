@@ -153,7 +153,14 @@ class ChatViewModelTest {
             override suspend fun keyFor(providerId: String): String = "key"
         }
 
-        val engine = AgentEngine(ToolRegistry(tools), resolver)
+        val engine = AgentEngine(
+            registry = ToolRegistry(tools),
+            resolver = resolver,
+            // Plans are covered by the router tests.
+            router = com.voidapp.core.ai.router.SmartRouter(
+                plan = { com.voidapp.core.ai.plan.Plan.MAX },
+            ),
+        )
         val workspaceManager = WorkspaceManager(Files.createTempDirectory("chat-ui").toFile())
 
         return ChatViewModel(

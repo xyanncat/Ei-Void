@@ -47,6 +47,28 @@ object ModelCatalog {
     fun forProvider(providerId: String): List<CatalogModel> =
         all.filter { it.providerId == providerId }.sortedBy { it.rank }
 
+    /**
+     * Models reserved for the paid plans. They are not routed yet: their
+     * provider does not exist, so they stay out of [all] and are invisible to
+     * the app. The names never leave this file.
+     */
+    val reserved: List<CatalogModel> = listOf(
+        // Pro tier: White Dwarfs.
+        CatalogModel(
+            id = "muse-spark-1.3-contributor",
+            providerId = "reserved",
+            tier = Tier.WHITE_DWARF,
+            rank = 100,
+        ),
+        // Max tier: Red Dwarfs.
+        CatalogModel(
+            id = "deepseek-v4.1-flash-1017",
+            providerId = "reserved",
+            tier = Tier.RED_DWARF,
+            rank = 101,
+        ),
+    )
+
     fun forTier(tier: Tier): List<CatalogModel> =
         all.filter { it.tier == tier }.sortedBy { it.rank }
 

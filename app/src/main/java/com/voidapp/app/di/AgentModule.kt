@@ -1,10 +1,12 @@
 package com.voidapp.app.di
 
+import com.voidapp.app.agent.RoomUsageMeter
 import com.voidapp.app.agent.SecretProviderResolver
 import com.voidapp.core.agent.AgentEngine
 import com.voidapp.core.agent.AgentLimits
 import com.voidapp.core.agent.ProviderResolver
 import com.voidapp.core.agent.ToolRegistry
+import com.voidapp.core.agent.UsageMeter
 import com.voidapp.core.agent.context.ContextManager
 import com.voidapp.core.agent.planner.Planner
 import com.voidapp.core.agent.tools.FileTools
@@ -30,6 +32,10 @@ abstract class AgentModule {
     @Singleton
     abstract fun bindProviderResolver(impl: SecretProviderResolver): ProviderResolver
 
+    @Binds
+    @Singleton
+    abstract fun bindUsageMeter(impl: RoomUsageMeter): UsageMeter
+
     companion object {
 
         @Provides
@@ -50,13 +56,18 @@ abstract class AgentModule {
             registry: ToolRegistry,
             resolver: ProviderResolver,
             settingsStore: SettingsStore,
+            usageMeter: UsageMeter,
         ): AgentEngine = AgentEngine(
             registry = registry,
             resolver = resolver,
-            router = SmartRouter(preferredTier = { settingsStore.preferredTier.value }),
+            router = SmartRouter(
+                preferredTier = { settingsStore.preferredTier.value },
+                plan = { settingsStore.plan.value },
+            ),
             contextManager = ContextManager(),
             planner = Planner(),
             limits = AgentLimits(),
+            usageMeter = usageMeter,
         )
     }
 }

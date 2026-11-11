@@ -11,6 +11,7 @@ import com.voidapp.core.ai.ToolCall
 import com.voidapp.core.ai.router.Candidate
 import com.voidapp.core.ai.router.Route
 import com.voidapp.core.ai.router.SmartRouter
+import com.voidapp.core.common.time.startOfMonthMillis
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -44,6 +45,8 @@ class AgentEngine(
     private val contextManager: ContextManager = ContextManager(),
     private val planner: Planner = Planner(),
     private val limits: AgentLimits = AgentLimits(),
+    /** Null means "do not meter", which is what the unit tests use. */
+    private val usageMeter: UsageMeter? = null,
 ) {
 
     fun run(task: String, ctx: ToolContext): Flow<AgentEvent> = flow {
@@ -81,6 +84,21 @@ class AgentEngine(
 
         while (iterations < limits.maxIterations) {
             iterations++
+
+            val meter = usageMeter
+            val monthStart = startOfMonthMillis()
+            if (meter != null) {
+                val used = meter.used(route.model.tier, monthStart)
+                val allowed = meter.allowance(route.model.tier, monthStart)
+                if (used >= allowed) {
+                    emit(
+                        AgentEvent.Failed(
+                            "Your ${route.tierName} allowance for this month is used up.",
+                        ),
+                    )
+                    return@flow
+                }
+            }
 
             val request = ChatRequest(
                 model = route.model.id,
@@ -132,6 +150,12 @@ class AgentEngine(
                 emit(AgentEvent.Thinking(route.tierName, route.reason))
                 continue
             }
+
+            // What the call cost: the answer plus the tool arguments.
+            val spent = (
+                text.length + toolCalls.sumOf { it.arguments.toString().length }
+                ) / CHARS_PER_TOKEN
+            usageMeter?.record(route.model.tier, spent)
 
             if (text.isNotBlank()) {
                 messages += ChatMessage(role = Role.ASSISTANT, content = text)

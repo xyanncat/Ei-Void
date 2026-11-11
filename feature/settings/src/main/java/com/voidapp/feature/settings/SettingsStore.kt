@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.voidapp.core.ai.Tier
+import com.voidapp.core.ai.plan.Plan
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -23,8 +24,12 @@ interface SettingsStore {
      */
     val preferredTier: StateFlow<Tier?>
 
+    /** The subscription plan. Billing is not connected yet. */
+    val plan: StateFlow<Plan>
+
     fun setTheme(mode: ThemeMode)
     fun setPreferredTier(tier: Tier?)
+    fun setPlan(plan: Plan)
 }
 
 private val Context.settingsDataStore: DataStore<Preferences> by
@@ -52,6 +57,9 @@ class DataStoreSettingsStore(
     private val _preferredTier = MutableStateFlow<Tier?>(null)
     override val preferredTier: StateFlow<Tier?> = _preferredTier.asStateFlow()
 
+    private val _plan = MutableStateFlow(Plan.FREE)
+    override val plan: StateFlow<Plan> = _plan.asStateFlow()
+
     init {
         scope.launch {
             dataStore.data.collect { preferences ->
@@ -62,6 +70,10 @@ class DataStoreSettingsStore(
                 preferences[PREFERRED_TIER]
                     ?.let { stored -> Tier.entries.firstOrNull { it.name == stored } }
                     ?.let { _preferredTier.value = it }
+
+                preferences[PLAN]
+                    ?.let { stored -> Plan.fromName(stored) }
+                    ?.let { _plan.value = it }
             }
         }
     }
@@ -84,8 +96,14 @@ class DataStoreSettingsStore(
         }
     }
 
+    override fun setPlan(plan: Plan) {
+        _plan.value = plan
+        scope.launch { dataStore.edit { it[PLAN] = plan.name } }
+    }
+
     private companion object {
         val THEME = stringPreferencesKey("theme")
         val PREFERRED_TIER = stringPreferencesKey("preferred_tier")
+        val PLAN = stringPreferencesKey("plan")
     }
 }

@@ -138,12 +138,19 @@ class SettingsViewModelTest {
         private val _preferredTier = MutableStateFlow<Tier?>(null)
         override val preferredTier: StateFlow<Tier?> = _preferredTier
 
+        private val _plan = MutableStateFlow(com.voidapp.core.ai.plan.Plan.FREE)
+        override val plan: StateFlow<com.voidapp.core.ai.plan.Plan> = _plan
+
         override fun setTheme(mode: ThemeMode) {
             _theme.value = mode
         }
 
         override fun setPreferredTier(tier: Tier?) {
             _preferredTier.value = tier
+        }
+
+        override fun setPlan(plan: com.voidapp.core.ai.plan.Plan) {
+            _plan.value = plan
         }
     }
 

@@ -5,6 +5,8 @@ import com.voidapp.core.ai.ChatChunk
 import com.voidapp.core.ai.ChatRequest
 import com.voidapp.core.ai.Model
 import com.voidapp.core.ai.Tier
+import com.voidapp.core.ai.plan.Plan
+import com.voidapp.core.ai.router.SmartRouter
 import com.voidapp.core.ai.ToolCall
 import com.voidapp.core.common.github.Repo
 import com.voidapp.core.workspace.Workspace
@@ -65,6 +67,8 @@ class AgentEngineTest {
     ) = AgentEngine(
         registry = ToolRegistry(tools),
         resolver = resolverFor(provider),
+        // The router tests cover plans; these tests cover the loop.
+        router = SmartRouter(plan = { Plan.MAX }),
         limits = limits,
     )
 
@@ -149,6 +153,7 @@ class AgentEngineTest {
         val engine = AgentEngine(
             registry = ToolRegistry(emptyList()),
             resolver = resolverFor(broken, working),
+            router = SmartRouter(plan = { Plan.MAX }),
         )
 
         val events = engine.runFor("say hello")
@@ -162,6 +167,7 @@ class AgentEngineTest {
         val engine = AgentEngine(
             registry = ToolRegistry(emptyList()),
             resolver = resolverFor(),
+            router = SmartRouter(plan = { Plan.MAX }),
         )
 
         val events = engine.runFor("say hello")
@@ -222,6 +228,7 @@ class AgentEngineTest {
         val engine = AgentEngine(
             registry = ToolRegistry(emptyList()),
             resolver = resolverFor(silent, working),
+            router = SmartRouter(plan = { Plan.MAX }),
             limits = AgentLimits(modelTimeoutMillis = 50),
         )
 
@@ -229,6 +236,62 @@ class AgentEngineTest {
 
         assertTrue(events.any { it is AgentEvent.Token && it.text == "from the backup" })
         assertTrue(events.last() is AgentEvent.Finished)
+    }
+
+    @Test
+    fun `an exhausted allowance stops the run before calling the model`() = runTest {
+        val provider = ScriptedProvider("scripted", listOf(listOf(ChatChunk.Delta("hi"), ChatChunk.Finished("stop"))))
+        val meter = FakeMeter(allowance = 100, used = 100)
+
+        val events = withContext(Dispatchers.Default) {
+            AgentEngine(
+                registry = ToolRegistry(emptyList()),
+                resolver = resolverFor(provider),
+                router = SmartRouter(plan = { Plan.MAX }),
+                usageMeter = meter,
+            ).run("say hello", context()).toList()
+        }
+
+        val failure = events.last()
+        assertTrue(failure is AgentEvent.Failed)
+        assertTrue((failure as AgentEvent.Failed).message.contains("used up"))
+        assertEquals(0, provider.requests.size)
+    }
+
+    @Test
+    fun `a finished call is recorded against its tier`() = runTest {
+        val provider = ScriptedProvider("scripted", listOf(listOf(ChatChunk.Delta("Hello"), ChatChunk.Finished("stop"))))
+        val meter = FakeMeter(allowance = 10_000, used = 0)
+
+        withContext(Dispatchers.Default) {
+            AgentEngine(
+                registry = ToolRegistry(emptyList()),
+                resolver = resolverFor(provider),
+                router = SmartRouter(plan = { Plan.MAX }),
+                usageMeter = meter,
+            ).run("say hello", context()).toList()
+        }
+
+        assertEquals(listOf(Tier.WHITE_DWARF), meter.recordedTiers)
+        assertTrue(meter.recordedTokens > 0)
+    }
+
+    private class FakeMeter(
+        private val allowance: Long,
+        private val used: Long,
+    ) : UsageMeter {
+        val recordedTiers = mutableListOf<Tier>()
+        var recordedTokens: Int = 0
+            private set
+
+        override suspend fun used(tier: Tier, since: Long): Long = used
+
+        override suspend fun allowance(tier: Tier, since: Long): Long = allowance
+
+        override suspend fun record(tier: Tier, tokens: Int) {
+            recordedTiers += tier
+            recordedTokens += tokens
+        }
     }
 
     private class SilentProvider(override val id: String) : AiProvider {

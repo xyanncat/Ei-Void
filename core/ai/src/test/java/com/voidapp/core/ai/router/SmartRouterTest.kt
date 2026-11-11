@@ -6,6 +6,7 @@ import com.voidapp.core.ai.ChatRequest
 import com.voidapp.core.ai.Model
 import com.voidapp.core.ai.Tier
 import com.voidapp.core.ai.models.ModelCatalog
+import com.voidapp.core.ai.plan.Plan
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import org.junit.Assert.assertEquals
@@ -39,7 +40,7 @@ class SmartRouterTest {
 
     @Test
     fun `a small edit goes to the smallest tier`() {
-        val router = SmartRouter()
+        val router = SmartRouter(plan = { Plan.MAX })
 
         val route = router.pick(
             "fix the typo",
@@ -56,7 +57,7 @@ class SmartRouterTest {
 
     @Test
     fun `a review goes to the middle tier`() {
-        val router = SmartRouter()
+        val router = SmartRouter(plan = { Plan.MAX })
 
         val route = router.pick(
             "review the parser for bugs",
@@ -72,7 +73,7 @@ class SmartRouterTest {
 
     @Test
     fun `scaffolding goes to the strongest tier`() {
-        val router = SmartRouter()
+        val router = SmartRouter(plan = { Plan.MAX })
 
         val route = router.pick(
             "scaffold a new module",
@@ -88,7 +89,7 @@ class SmartRouterTest {
 
     @Test
     fun `the user's tier wins over the task`() {
-        val router = SmartRouter(preferredTier = { Tier.RED_DWARF })
+        val router = SmartRouter(preferredTier = { Tier.RED_DWARF }, plan = { Plan.MAX })
 
         val route = router.pick(
             "fix the typo",
@@ -104,7 +105,7 @@ class SmartRouterTest {
 
     @Test
     fun `an unavailable tier falls back to a stronger one, not a weaker one`() {
-        val router = SmartRouter(preferredTier = { Tier.RED_DWARF })
+        val router = SmartRouter(preferredTier = { Tier.RED_DWARF }, plan = { Plan.MAX })
 
         val route = router.pick(
             "fix the typo",
@@ -169,6 +170,53 @@ class SmartRouterTest {
         val router = SmartRouter()
 
         assertNull(router.pick("fix the typo", emptyList()))
+    }
+
+    @Test
+    fun `the free plan never leaves the smallest tier`() {
+        val router = SmartRouter(plan = { Plan.FREE })
+
+        val scaffold = router.pick(
+            "scaffold a new module",
+            listOf(
+                candidate("white", Tier.WHITE_DWARF),
+                candidate("neutron", Tier.NEUTRON_STAR),
+            ),
+        )
+
+        assertEquals(Tier.NEUTRON_STAR, scaffold?.model?.tier)
+    }
+
+    @Test
+    fun `pro can reach white dwarfs for a review`() {
+        val router = SmartRouter(plan = { Plan.PRO })
+
+        val route = router.pick(
+            "review the parser",
+            listOf(
+                candidate("white", Tier.WHITE_DWARF),
+                candidate("neutron", Tier.NEUTRON_STAR),
+            ),
+        )
+
+        assertEquals(Tier.WHITE_DWARF, route?.model?.tier)
+    }
+
+    @Test
+    fun `a preferred tier the plan does not include is ignored`() {
+        val router = SmartRouter(preferredTier = { Tier.WHITE_DWARF }, plan = { Plan.FREE })
+
+        val route = router.pick(
+            "fix the typo",
+            listOf(
+                candidate("white", Tier.WHITE_DWARF),
+                candidate("neutron", Tier.NEUTRON_STAR),
+            ),
+        )
+
+        // Free does not include White Dwarfs, so the preference is dropped and
+        // the task falls to its natural tier.
+        assertEquals(Tier.NEUTRON_STAR, route?.model?.tier)
     }
 
     @Test
