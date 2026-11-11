@@ -73,7 +73,7 @@ class AgentEngine(
             ChatMessage(role = Role.USER, content = task),
         )
 
-        val failedProviders = mutableSetOf<String>()
+        val failedCandidates = mutableSetOf<String>()
         var iterations = 0
         var outputBudget = limits.maxOutputTokens
 
@@ -92,7 +92,7 @@ class AgentEngine(
                     ?: throw AiProviderException("No key for ${route.providerId}")
                 providerFor(targets, route).chat(request, key)
             } catch (error: Exception) {
-                val fallback = router.next(task, candidates, failedProviders + route.providerId)
+                val fallback = router.next(task, candidates, failedCandidates + route.key)
                 if (fallback == null) {
                     emit(
                         AgentEvent.Failed(
@@ -101,7 +101,7 @@ class AgentEngine(
                     )
                     return@flow
                 }
-                failedProviders += route.providerId
+                failedCandidates += route.key
                 route = fallback
                 emit(AgentEvent.Thinking(route.tierName, route.reason))
                 continue

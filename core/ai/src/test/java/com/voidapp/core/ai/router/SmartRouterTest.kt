@@ -131,19 +131,37 @@ class SmartRouterTest {
     }
 
     @Test
-    fun `the fallback skips the provider that failed`() {
+    fun `the fallback skips the model that failed, not the whole provider`() {
         val router = SmartRouter()
 
         val route = router.next(
             "fix the typo",
             listOf(
-                candidate("a/one", Tier.NEUTRON_STAR, providerId = "provider-a"),
-                candidate("b/two", Tier.NEUTRON_STAR, providerId = "provider-b"),
+                candidate("poolside/laguna-xs-2.1", Tier.NEUTRON_STAR, providerId = "nvidia"),
+                candidate("cohere/north-mini-code:free", Tier.NEUTRON_STAR, providerId = "openrouter"),
             ),
-            failed = setOf("provider-a"),
+            failedKeys = setOf("nvidia/poolside/laguna-xs-2.1"),
         )
 
-        assertEquals("provider-b", route?.providerId)
+        assertEquals("openrouter", route?.providerId)
+    }
+
+    @Test
+    fun `a second model on the failed provider is still tried`() {
+        val router = SmartRouter()
+
+        val route = router.next(
+            "fix the typo",
+            listOf(
+                candidate("poolside/laguna-xs-2.1", Tier.NEUTRON_STAR, providerId = "nvidia"),
+                candidate("nvidia/nemotron-3-ultra-550b-a55b", Tier.NEUTRON_STAR, providerId = "nvidia"),
+            ),
+            failedKeys = setOf("nvidia/poolside/laguna-xs-2.1"),
+        )
+
+        // Both live on nvidia; the second model must still be a candidate.
+        assertEquals("nvidia", route?.providerId)
+        assertEquals("nvidia/nemotron-3-ultra-550b-a55b", route?.model?.id)
     }
 
     @Test

@@ -20,6 +20,9 @@ data class Route(
 ) {
     /** What the user sees: "Red Dwarfs", never the provider's model id. */
     val tierName: String get() = model.displayName
+
+    /** Identifies this exact choice, so failures can be tracked per model. */
+    val key: String get() = "$providerId/${model.id}"
 }
 
 /**
@@ -56,20 +59,27 @@ class SmartRouter(
         )
     }
 
-    /** The next candidate after a provider failed. */
-    fun next(task: String, candidates: List<Candidate>, failed: Set<String>): Route? {
+    /**
+     * The next candidate after a model failed. [failedKeys] holds
+     * `Route.key` values, so a second model on the same provider is still
+     * tried before the router moves to another provider.
+     */
+    fun next(task: String, candidates: List<Candidate>, failedKeys: Set<String>): Route? {
         val kind = classify(task)
         val wanted = preferredTier() ?: tierFor(kind)
         return rank(wanted, candidates)
-            .firstOrNull { it.provider.id !in failed }
+            .firstOrNull { candidateKey(it) !in failedKeys }
             ?.let {
                 Route(
                     providerId = it.provider.id,
                     model = it.model,
-                    reason = "fallback after ${failed.joinToString()}",
+                    reason = "fallback after ${failedKeys.joinToString()}",
                 )
             }
     }
+
+    private fun candidateKey(candidate: Candidate): String =
+        "${candidate.provider.id}/${candidate.model.id}"
 
     /** The tier a task wants when the user has no preference. */
     fun tierFor(kind: TaskKind): Tier = when (kind) {
