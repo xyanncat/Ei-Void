@@ -59,7 +59,7 @@ class SettingsViewModel @Inject constructor(
             ProviderInfo("openrouter", "OpenRouter", "Free models via a single key"),
             ProviderInfo("nvidia", "NVIDIA NIM", "Free hosted model endpoints"),
             ProviderInfo("nara", "Nara Router", "Routes across free models"),
-            ProviderInfo("kira", "Kira AI", "Free tier assistant"),
+            ProviderInfo("kira", "Kira AI", "Needs its endpoint and a model id first"),
         )
     }
 }
