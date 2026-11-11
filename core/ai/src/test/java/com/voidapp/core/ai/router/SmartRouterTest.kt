@@ -173,7 +173,7 @@ class SmartRouterTest {
 
     @Test
     fun `the catalog maps every model to a tier`() {
-        assertEquals(7, ModelCatalog.all.size)
+        assertEquals(5, ModelCatalog.all.size)
         assertEquals(Tier.RED_DWARF, ModelCatalog.all.first().tier)
         assertEquals(Tier.NEUTRON_STAR, ModelCatalog.all.last().tier)
 
@@ -184,32 +184,20 @@ class SmartRouterTest {
     }
 
     @Test
-    fun `a model keeps the tier name as its display name`() {
-        val entry = ModelCatalog.find("deepseek-ai/deepseek-v4.1-flash", "nvidia")!!
-        val model = ModelCatalog.toModel(entry)
-
-        assertEquals("Red Dwarfs", model.displayName)
-        assertEquals("deepseek-ai/deepseek-v4.1-flash", model.id)
+    fun `the models that do not answer are not in the catalog`() {
+        assertNull(ModelCatalog.find("deepseek-ai/deepseek-v4.1-flash", "nvidia"))
+        assertNull(ModelCatalog.find("laguna-s-2.1", "nara"))
     }
 
     @Test
-    fun `the catalog carries the vendor's request settings`() {
-        val deepSeek = ModelCatalog.toModel(
-            ModelCatalog.find("deepseek-ai/deepseek-v4.1-flash", "nvidia")!!,
-        )
+    fun `a model keeps the tier name as its display name`() {
+        val entry = ModelCatalog.find("minimaxai/minimax-m3.1-flash", "nvidia")!!
+        val model = ModelCatalog.toModel(entry)
 
-        assertEquals(1.0, deepSeek.temperature)
-        assertEquals(0.95, deepSeek.topP)
-        assertEquals(262_144, deepSeek.maxTokens)
-        assertEquals(false, deepSeek.streaming)
-
-        // The other models keep the engine defaults.
-        val miniMax = ModelCatalog.toModel(
-            ModelCatalog.find("minimaxai/minimax-m3.1-flash", "nvidia")!!,
-        )
-        assertNull(miniMax.temperature)
-        assertNull(miniMax.topP)
-        assertTrue(miniMax.streaming)
+        assertEquals("Red Dwarfs", model.displayName)
+        assertEquals("minimaxai/minimax-m3.1-flash", model.id)
+        assertTrue(model.streaming)
+        assertNull(model.topP)
     }
 
     private class FakeProvider(override val id: String) : AiProvider {

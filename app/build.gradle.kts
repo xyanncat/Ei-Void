@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -5,6 +7,21 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
 }
+
+// `java` is shadowed by the Android plugin's `java` extension inside this
+// script, so the class is imported explicitly above.
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.inputStream().use { stream -> localProperties.load(stream) }
+}
+
+// The OAuth App client id is public, but it is configuration, not source:
+// it comes from local.properties (gitignored) or the environment.
+val githubClientId: String =
+    localProperties.getProperty("github.clientId")
+        ?: System.getenv("GITHUB_CLIENT_ID")
+        ?: ""
 
 android {
     namespace = "com.voidapp.app"
@@ -23,8 +40,8 @@ android {
 
         testInstrumentationRunner = "com.voidapp.app.HiltTestRunner"
 
-        // Replaced with the real OAuth App client id at release time.
-        buildConfigField("String", "GITHUB_CLIENT_ID", "\"\"")
+        // Set in local.properties as github.clientId=... (or in the environment).
+        buildConfigField("String", "GITHUB_CLIENT_ID", "\"$githubClientId\"")
     }
 
     buildTypes {

@@ -27,33 +27,21 @@ object ModelCatalog {
     /**
      * Order within a tier comes from [CatalogModel.rank].
      *
-     * - Red Dwarfs: the two strongest coding models.
-     * - White Dwarfs: the two in the middle.
+     * - Red Dwarfs: the strongest coding model that answers.
+     * - White Dwarfs: the middle.
      * - Neutron Stars: the small, fast ones.
      */
     val all: List<CatalogModel> = listOf(
         // Red Dwarfs (high)
-        CatalogModel(
-            id = "deepseek-ai/deepseek-v4.1-flash",
-            providerId = "nvidia",
-            tier = Tier.RED_DWARF,
-            rank = 1,
-            // The vendor's recommended request shape for this model.
-            temperature = 1.0,
-            topP = 0.95,
-            maxTokens = 262_144,
-            streaming = false,
-        ),
-        CatalogModel("minimaxai/minimax-m3.1-flash", "nvidia", Tier.RED_DWARF, rank = 2),
+        CatalogModel("minimaxai/minimax-m3.1-flash", "nvidia", Tier.RED_DWARF, rank = 1),
 
         // White Dwarfs (middle)
-        CatalogModel("stepfun-ai/step-5-preview", "nvidia", Tier.WHITE_DWARF, rank = 3),
-        CatalogModel("laguna-s-2.1", "nara", Tier.WHITE_DWARF, rank = 4),
+        CatalogModel("stepfun-ai/step-5-preview", "nvidia", Tier.WHITE_DWARF, rank = 2),
 
         // Neutron Stars (small)
-        CatalogModel("nvidia/nemotron-3-ultra-550b-a55b", "openrouter", Tier.NEUTRON_STAR, rank = 5),
-        CatalogModel("poolside/laguna-xs-2.1", "nvidia", Tier.NEUTRON_STAR, rank = 6),
-        CatalogModel("cohere/north-mini-code:free", "openrouter", Tier.NEUTRON_STAR, rank = 7),
+        CatalogModel("nvidia/nemotron-3-ultra-550b-a55b", "openrouter", Tier.NEUTRON_STAR, rank = 3),
+        CatalogModel("poolside/laguna-xs-2.1", "nvidia", Tier.NEUTRON_STAR, rank = 4),
+        CatalogModel("cohere/north-mini-code:free", "openrouter", Tier.NEUTRON_STAR, rank = 5),
     )
 
     fun forProvider(providerId: String): List<CatalogModel> =
