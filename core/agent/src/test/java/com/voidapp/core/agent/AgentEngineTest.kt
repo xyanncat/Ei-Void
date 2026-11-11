@@ -211,6 +211,39 @@ class AgentEngineTest {
     private suspend fun AgentEngine.runFor(task: String): List<AgentEvent> =
         withContext(Dispatchers.Default) { run(task, context()).toList() }
 
+    @Test
+    fun `a model that never answers falls back to the next one`() = runTest {
+        val silent = SilentProvider("silent")
+        val working = ScriptedProvider(
+            "working",
+            listOf(listOf(ChatChunk.Delta("from the backup"), ChatChunk.Finished("stop"))),
+        )
+
+        val engine = AgentEngine(
+            registry = ToolRegistry(emptyList()),
+            resolver = resolverFor(silent, working),
+            limits = AgentLimits(modelTimeoutMillis = 50),
+        )
+
+        val events = withContext(Dispatchers.Default) { engine.run("say hello", context()).toList() }
+
+        assertTrue(events.any { it is AgentEvent.Token && it.text == "from the backup" })
+        assertTrue(events.last() is AgentEvent.Finished)
+    }
+
+    private class SilentProvider(override val id: String) : AiProvider {
+        override val displayName: String get() = id
+
+        override suspend fun validate(apiKey: String): Boolean = true
+
+        override suspend fun listModels(apiKey: String): List<Model> = emptyList()
+
+        override suspend fun chat(request: ChatRequest, apiKey: String): Flow<ChatChunk> =
+            kotlinx.coroutines.flow.flow {
+                kotlinx.coroutines.delay(60_000)
+            }
+    }
+
     private class ScriptedProvider(
         override val id: String,
         private val script: List<List<ChatChunk>>,

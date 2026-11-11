@@ -22,6 +22,8 @@ data class AgentLimits(
     val maxIterations: Int = 25,
     /** How many tokens the model may produce in one run (approximated). */
     val maxOutputTokens: Int = 32_000,
+    /** How long one model call may take before the router tries another. */
+    val modelTimeoutMillis: Long = 45_000,
     /** How long one tool call may take. */
     val toolTimeoutMillis: Long = 60_000,
     /** How long the user has to answer a confirmation. */
@@ -84,48 +86,51 @@ class AgentEngine(
                 model = route.model.id,
                 messages = contextManager.trim(messages),
                 tools = registry.definitions(),
-                maxTokens = limits.maxOutputTokens,
+                temperature = route.model.temperature ?: DEFAULT_TEMPERATURE,
+                topP = route.model.topP,
+                maxTokens = route.model.maxTokens ?: limits.maxOutputTokens,
+                stream = route.model.streaming,
             )
 
-            val chunks = try {
-                val key = resolver.keyFor(route.providerId)
-                    ?: throw AiProviderException("No key for ${route.providerId}")
-                providerFor(targets, route).chat(request, key)
+            var text = ""
+            val toolCalls = mutableListOf<ToolCall>()
+            var finishReason = "stop"
+
+            // The timeout must wrap the collection: a provider's `chat`
+            // returns a cold flow whose work happens when it is collected.
+            val failure: String? = try {
+                withTimeout(limits.modelTimeoutMillis) {
+                    val key = resolver.keyFor(route.providerId)
+                        ?: throw AiProviderException("No key for ${route.providerId}")
+                    providerFor(targets, route).chat(request, key).collect { chunk ->
+                        when (chunk) {
+                            is ChatChunk.Delta -> {
+                                text += chunk.text
+                                outputBudget -= chunk.text.length / CHARS_PER_TOKEN
+                                emit(AgentEvent.Token(chunk.text))
+                            }
+                            is ChatChunk.ToolCallDelta -> toolCalls += chunk.call
+                            is ChatChunk.Finished -> finishReason = chunk.reason
+                        }
+                    }
+                }
+                null
+            } catch (error: TimeoutCancellationException) {
+                "${route.tierName} did not answer in time."
             } catch (error: Exception) {
+                error.message ?: "The model provider could not be reached."
+            }
+
+            if (failure != null) {
                 val fallback = router.next(task, candidates, failedCandidates + route.key)
                 if (fallback == null) {
-                    emit(
-                        AgentEvent.Failed(
-                            error.message ?: "The model provider could not be reached.",
-                        ),
-                    )
+                    emit(AgentEvent.Failed(failure))
                     return@flow
                 }
                 failedCandidates += route.key
                 route = fallback
                 emit(AgentEvent.Thinking(route.tierName, route.reason))
                 continue
-            }
-
-            var text = ""
-            val toolCalls = mutableListOf<ToolCall>()
-            var finishReason = "stop"
-
-            try {
-                chunks.collect { chunk ->
-                    when (chunk) {
-                        is ChatChunk.Delta -> {
-                            text += chunk.text
-                            outputBudget -= chunk.text.length / CHARS_PER_TOKEN
-                            emit(AgentEvent.Token(chunk.text))
-                        }
-                        is ChatChunk.ToolCallDelta -> toolCalls += chunk.call
-                        is ChatChunk.Finished -> finishReason = chunk.reason
-                    }
-                }
-            } catch (error: Exception) {
-                emit(AgentEvent.Failed(error.message ?: "The model stream failed."))
-                return@flow
             }
 
             if (text.isNotBlank()) {
@@ -197,5 +202,7 @@ class AgentEngine(
     private companion object {
         /** Rough characters-per-token ratio used for the output budget. */
         const val CHARS_PER_TOKEN = 4
+
+        const val DEFAULT_TEMPERATURE = 0.2
     }
 }

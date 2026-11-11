@@ -192,6 +192,26 @@ class SmartRouterTest {
         assertEquals("deepseek-ai/deepseek-v4.1-flash", model.id)
     }
 
+    @Test
+    fun `the catalog carries the vendor's request settings`() {
+        val deepSeek = ModelCatalog.toModel(
+            ModelCatalog.find("deepseek-ai/deepseek-v4.1-flash", "nvidia")!!,
+        )
+
+        assertEquals(1.0, deepSeek.temperature)
+        assertEquals(0.95, deepSeek.topP)
+        assertEquals(262_144, deepSeek.maxTokens)
+        assertEquals(false, deepSeek.streaming)
+
+        // The other models keep the engine defaults.
+        val miniMax = ModelCatalog.toModel(
+            ModelCatalog.find("minimaxai/minimax-m3.1-flash", "nvidia")!!,
+        )
+        assertNull(miniMax.temperature)
+        assertNull(miniMax.topP)
+        assertTrue(miniMax.streaming)
+    }
+
     private class FakeProvider(override val id: String) : AiProvider {
         override val displayName: String get() = id
 

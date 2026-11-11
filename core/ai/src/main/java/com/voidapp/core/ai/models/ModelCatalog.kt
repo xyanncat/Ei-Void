@@ -15,6 +15,11 @@ data class CatalogModel(
     val providerId: String,
     val tier: Tier,
     val rank: Int,
+    /** Model-specific request settings, from the provider's own documentation. */
+    val temperature: Double? = null,
+    val topP: Double? = null,
+    val maxTokens: Int? = null,
+    val streaming: Boolean = true,
 )
 
 object ModelCatalog {
@@ -28,7 +33,17 @@ object ModelCatalog {
      */
     val all: List<CatalogModel> = listOf(
         // Red Dwarfs (high)
-        CatalogModel("deepseek-ai/deepseek-v4.1-flash", "nvidia", Tier.RED_DWARF, rank = 1),
+        CatalogModel(
+            id = "deepseek-ai/deepseek-v4.1-flash",
+            providerId = "nvidia",
+            tier = Tier.RED_DWARF,
+            rank = 1,
+            // The vendor's recommended request shape for this model.
+            temperature = 1.0,
+            topP = 0.95,
+            maxTokens = 262_144,
+            streaming = false,
+        ),
         CatalogModel("minimaxai/minimax-m3.1-flash", "nvidia", Tier.RED_DWARF, rank = 2),
 
         // White Dwarfs (middle)
@@ -62,6 +77,10 @@ object ModelCatalog {
         tier = entry.tier,
         contextWindow = DEFAULT_CONTEXT_WINDOW,
         isFree = true,
+        temperature = entry.temperature,
+        topP = entry.topP,
+        maxTokens = entry.maxTokens,
+        streaming = entry.streaming,
     )
 
     /** For a model the provider reports but the catalog does not know. */

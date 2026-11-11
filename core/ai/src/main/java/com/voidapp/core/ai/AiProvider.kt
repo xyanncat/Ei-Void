@@ -32,6 +32,12 @@ data class Model(
     val contextWindow: Int,
     val supportsTools: Boolean = true,
     val isFree: Boolean = false,
+    /** Model-specific request settings; null means "use the engine's default". */
+    val temperature: Double? = null,
+    val topP: Double? = null,
+    val maxTokens: Int? = null,
+    /** Some models only answer a non-streamed request. */
+    val streaming: Boolean = true,
 )
 
 data class ToolCall(
@@ -60,7 +66,9 @@ data class ChatRequest(
     val messages: List<ChatMessage>,
     val tools: List<ToolDefinition> = emptyList(),
     val temperature: Double = 0.2,
+    val topP: Double? = null,
     val maxTokens: Int = 4096,
+    val stream: Boolean = true,
 )
 
 sealed interface ChatChunk {

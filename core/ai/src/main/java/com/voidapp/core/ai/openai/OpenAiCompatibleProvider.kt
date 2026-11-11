@@ -108,9 +108,10 @@ class OpenAiCompatibleProvider(
 
     private fun buildRequestBody(request: ChatRequest): JsonObject = buildJsonObject {
         put("model", request.model)
-        put("stream", true)
+        put("stream", request.stream)
         put("temperature", request.temperature)
         put("max_tokens", request.maxTokens)
+        request.topP?.let { put("top_p", it) }
 
         put(
             "messages",

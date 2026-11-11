@@ -176,6 +176,30 @@ class OpenAiCompatibleProviderTest {
     }
 
     @Test
+    fun `the request carries the model's stream and sampling settings`() = runTest {
+        var captured: HttpRequestData? = null
+        val engine = MockEngine { request ->
+            captured = request
+            respond(
+                content = """{"choices":[{"message":{"content":"ok"},"finish_reason":"stop"}]}""",
+                status = HttpStatusCode.OK,
+                headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString()),
+            )
+        }
+
+        provider(engine).chat(
+            request().copy(stream = false, topP = 0.95, temperature = 1.0, maxTokens = 262_144),
+            "key",
+        ).toList()
+
+        val body = (captured?.body as? TextContent)?.text.orEmpty()
+        assertTrue(body.contains("\"stream\":false"))
+        assertTrue(body.contains("\"top_p\":0.95"))
+        assertTrue(body.contains("\"temperature\":1.0"))
+        assertTrue(body.contains("\"max_tokens\":262144"))
+    }
+
+    @Test
     fun `tools are sent as function definitions`() = runTest {
         var captured: HttpRequestData? = null
         val engine = MockEngine { request ->
