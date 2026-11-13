@@ -70,8 +70,8 @@ Honest, as of the last commit:
 |---|---|
 | ✅ Built and unit-tested | 150 tests across all modules; both APKs assemble |
 | ✅ Working | login, repo list, clone, file browser, git tools, agent loop, chat, settings |
-| ⚠️ Unverified on a device | no phone or emulator was attached during development, so the three instrumented tests have only been compiled |
-| ⚠️ Not configured yet | the OAuth client id (see below) and the Kira AI provider |
+| ⚠️ Unverified on a device | no phone or emulator was attached during development, so the three instrumented tests have only been compiled ([#2](https://github.com/xyanncat/Ei-Void/issues/2)) |
+| ⚠️ Not configured yet | the OAuth client id ([#1](https://github.com/xyanncat/Ei-Void/issues/1)) and a decision on billing ([#14](https://github.com/xyanncat/Ei-Void/issues/14)) |
 
 <br/>
 
@@ -127,12 +127,39 @@ Then build again. Without it, the login screen cannot complete.
 
 ## Roadmap
 
-- [ ] On-device verification of the instrumented tests
-- [ ] SQLCipher for the database at rest
-- [ ] Biometric app lock, `FLAG_SECURE` on the editor
-- [ ] Release pipeline with signed APKs and real certificate pins
-- [ ] A model picker per provider, behind the tier names
-- [ ] Kira AI provider
+Everything below is tracked as an issue.
+
+**Blocked on you**
+- [#1](https://github.com/xyanncat/Ei-Void/issues/1) — the OAuth client id, so login can finish
+- [#2](https://github.com/xyanncat/Ei-Void/issues/2) — run it on a device
+- [#14](https://github.com/xyanncat/Ei-Void/issues/14) — decide how subscriptions are billed
+
+**Build and release**
+- [#3](https://github.com/xyanncat/Ei-Void/issues/3) launcher icon and splash ·
+  [#4](https://github.com/xyanncat/Ei-Void/issues/4) signed release build ·
+  [#20](https://github.com/xyanncat/Ei-Void/issues/20) CI
+
+**Security**
+- [#11](https://github.com/xyanncat/Ei-Void/issues/11) SQLCipher ·
+  [#12](https://github.com/xyanncat/Ei-Void/issues/12) biometric lock ·
+  [#13](https://github.com/xyanncat/Ei-Void/issues/13) certificate pins
+
+**Accuracy**
+- [#5](https://github.com/xyanncat/Ei-Void/issues/5) real token counting ·
+  [#6](https://github.com/xyanncat/Ei-Void/issues/6) context windows ·
+  [#7](https://github.com/xyanncat/Ei-Void/issues/7) project limits ·
+  [#10](https://github.com/xyanncat/Ei-Void/issues/10) prune usage rows
+
+**Product**
+- [#8](https://github.com/xyanncat/Ei-Void/issues/8) chat history ·
+  [#9](https://github.com/xyanncat/Ei-Void/issues/9) partial output ·
+  [#15](https://github.com/xyanncat/Ei-Void/issues/15) the editor ·
+  [#16](https://github.com/xyanncat/Ei-Void/issues/16) project management ·
+  [#17](https://github.com/xyanncat/Ei-Void/issues/17) onboarding illustrations ·
+  [#18](https://github.com/xyanncat/Ei-Void/issues/18) offline and retries
+
+**Docs**
+- [#19](https://github.com/xyanncat/Ei-Void/issues/19) refresh the specification and the plans
 
 <br/>
 
