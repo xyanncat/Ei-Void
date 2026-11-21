@@ -114,9 +114,13 @@ cd android
 - [x] Unified Discord bot (62 tests)
 - [x] Unified website, dashboard, link flow and app API (41 tests)
 - [x] Emulator walkthrough: add → alarm → notification → Mark paid → Snooze
-- [ ] Redmi install: MIUI blocks sideloading until **Developer options → Install via USB** is enabled
+- [x] Redmi 10 Prime walkthrough: installed, added a reminder, exact alarm fired, notification posted
 - [ ] Usage sync from the app to the dashboard/bot (API and device keys are ready)
 - [ ] Real Clerk/Discord/Postgres credentials and a Render deployment
 - [ ] Signed release APK
+
+Note: MIUI 14 still rejects `adb install` with `INSTALL_FAILED_USER_RESTRICTED` on
+this Redmi even with the two developer toggles on. The working install path was
+the phone's Chrome/package installer over the LAN; see `docs/qa/README.md`.
 
 See `docs/superpowers/plans/2026-11-21-ei-void-unification.md` for the full task list and `docs/qa/README.md` for the device checklist.

@@ -5,7 +5,19 @@
 | Device | API | Status |
 |---|---|---|
 | Android emulator `void35` | 35 | Final merged APK installed and walked through |
-| Redmi 10 Prime (`005302500508`) | 33 | ADB authorized, but MIUI returns `INSTALL_FAILED_USER_RESTRICTED` until **Developer options → Install via USB** is enabled |
+| Redmi 10 Prime (`005302500508`) | 33 | Installed through the phone's package installer and walked through |
+
+MIUI 14 still rejects `adb install` with `INSTALL_FAILED_USER_RESTRICTED` even
+with **Install via USB** and **USB debugging (Security settings)** enabled. The
+working install path used here was:
+
+1. Serve `app-debug.apk` over the LAN.
+2. Open the URL in Chrome on the phone and allow Chrome to install unknown apps.
+3. Accept Play Protect's scan prompt.
+4. Install from the package installer.
+
+The next ADB install may work after MIUI's install session is refreshed, but the
+phone installer is the reliable path on this device.
 
 Verified on the emulator on 2026-11-21:
 
@@ -19,14 +31,27 @@ Verified on the emulator on 2026-11-21:
   Ei Void branding.
 - No fatal exception in logcat; the process stayed alive.
 
-Evidence screenshots: `eivoid-home-final.png`, `eivoid-reminders.png`,
-`eivoid-notif-expanded.png`, `eivoid-settings-final.png`.
+Verified on the Redmi 10 Prime on 2026-11-22:
+
+- Installed and launched; Home opened first with the four-tab shell.
+- Notification and exact-alarm permissions were granted.
+- Added “Redmi Test / Phone / ₹1”; the row persisted and showed on Home.
+- The exact alarm fired (`com.eivoid.core.reminders.action.REMINDER`).
+- The notification posted on the `reminders` channel with **MARK PAID** and
+  **SNOOZE 1 DAY**.
+- No crash; the process stayed alive.
+
+Evidence screenshots: `redmi-home.png`, `redmi-reminders.png`,
+`redmi-edit.png`, `redmi-notif.png`, plus the emulator set
+`eivoid-home-final.png`, `eivoid-reminders.png`, `eivoid-notif-expanded.png`,
+`eivoid-settings-final.png`.
 
 ## Reminder checks
 
-- [ ] Add a one-time reminder due in two minutes; notification fires.
+- [x] Add a one-time reminder due in two minutes; notification fires.
+- [x] Mark Paid moves the row to Paid and stops its alarm (emulator).
+- [x] Snooze 1 day moves the due date and resets the delivered marker (emulator).
 - [ ] Add a repeating reminder; Mark Paid creates the next occurrence.
-- [ ] Snooze 1 day moves the due date and re-arms the alarm.
 - [ ] Deny POST_NOTIFICATIONS; app explains how to enable it and does not record delivery.
 - [ ] Revoke exact-alarm permission; scheduling falls back to inexact.
 - [ ] Reboot the device; active alarms are rescheduled.
