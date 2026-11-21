@@ -6,6 +6,8 @@ ENV NODE_ENV=production
 COPY package.json package-lock.json ./
 COPY packages ./packages
 COPY services/web ./services/web
+# The npm workspace tree must be complete even though this image only runs web.
+COPY services/bot ./services/bot
 
 RUN npm ci --no-audit --no-fund && npm cache clean --force
 
