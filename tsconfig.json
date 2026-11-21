@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@eivoid/contracts": ["packages/contracts/src/index.ts"],
+      "@eivoid/config": ["packages/config/src/index.ts"],
+      "@eivoid/db": ["packages/db/src/index.ts"],
+      "@eivoid/mailer": ["packages/mailer/src/index.ts"],
+      "@eivoid/discord-core": ["packages/discord-core/src/index.ts"]
+    }
+  },
+  "include": ["packages/*/src/**/*.ts", "services/*/src/**/*.ts", "services/*/test/**/*.ts"]
+}
