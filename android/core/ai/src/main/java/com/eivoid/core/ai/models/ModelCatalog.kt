@@ -1,0 +1,110 @@
+package com.eivoid.core.ai.models
+
+import com.eivoid.core.ai.Model
+import com.eivoid.core.ai.Tier
+
+/**
+ * The models Void knows, mapped to the tier the user sees.
+ *
+ * The provider ids are internal: neither the chat nor the settings ever show
+ * them. [rank] is the quality order of the models inside the whole catalog
+ * (1 is the strongest), used to pick one model when a tier has several.
+ */
+data class CatalogModel(
+    val id: String,
+    val providerId: String,
+    val tier: Tier,
+    val rank: Int,
+    /** Model-specific request settings, from the provider's own documentation. */
+    val temperature: Double? = null,
+    val topP: Double? = null,
+    val maxTokens: Int? = null,
+    val streaming: Boolean = true,
+)
+
+object ModelCatalog {
+
+    /**
+     * Order within a tier comes from [CatalogModel.rank].
+     *
+     * - Red Dwarfs: the strongest coding model that answers.
+     * - White Dwarfs: the middle.
+     * - Neutron Stars: the small, fast ones.
+     */
+    val all: List<CatalogModel> = listOf(
+        // Red Dwarfs (high)
+        CatalogModel("minimaxai/minimax-m3.1-flash", "nvidia", Tier.RED_DWARF, rank = 1),
+
+        // White Dwarfs (middle)
+        CatalogModel("stepfun-ai/step-5-preview", "nvidia", Tier.WHITE_DWARF, rank = 2),
+
+        // Neutron Stars (small)
+        CatalogModel("nvidia/nemotron-3-ultra-550b-a55b", "openrouter", Tier.NEUTRON_STAR, rank = 3),
+        CatalogModel("poolside/laguna-xs-2.1", "nvidia", Tier.NEUTRON_STAR, rank = 4),
+        CatalogModel("cohere/north-mini-code:free", "openrouter", Tier.NEUTRON_STAR, rank = 5),
+    )
+
+    fun forProvider(providerId: String): List<CatalogModel> =
+        all.filter { it.providerId == providerId }.sortedBy { it.rank }
+
+    /**
+     * Models reserved for the paid plans. They are not routed yet: their
+     * provider does not exist, so they stay out of [all] and are invisible to
+     * the app. The names never leave this file.
+     */
+    val reserved: List<CatalogModel> = listOf(
+        // Pro tier: White Dwarfs.
+        CatalogModel(
+            id = "muse-spark-1.3-contributor",
+            providerId = "reserved",
+            tier = Tier.WHITE_DWARF,
+            rank = 100,
+        ),
+        // Max tier: Red Dwarfs.
+        CatalogModel(
+            id = "deepseek-v4.1-flash-1017",
+            providerId = "reserved",
+            tier = Tier.RED_DWARF,
+            rank = 101,
+        ),
+    )
+
+    fun forTier(tier: Tier): List<CatalogModel> =
+        all.filter { it.tier == tier }.sortedBy { it.rank }
+
+    fun find(modelId: String, providerId: String): CatalogModel? =
+        all.firstOrNull { it.id == modelId && it.providerId == providerId }
+
+    /** The quality rank of a model, or a large number when it is unknown. */
+    fun rankOf(modelId: String, providerId: String): Int =
+        find(modelId, providerId)?.rank ?: Int.MAX_VALUE
+
+    /** Turns a catalog entry into the model the engine calls. */
+    fun toModel(entry: CatalogModel): Model = Model(
+        id = entry.id,
+        providerId = entry.providerId,
+        displayName = entry.tier.displayName,
+        tier = entry.tier,
+        contextWindow = DEFAULT_CONTEXT_WINDOW,
+        isFree = true,
+        temperature = entry.temperature,
+        topP = entry.topP,
+        maxTokens = entry.maxTokens,
+        streaming = entry.streaming,
+    )
+
+    /** For a model the provider reports but the catalog does not know. */
+    fun infer(modelId: String, providerId: String, freeModelSuffix: String? = null): Model {
+        val tier = all.firstOrNull { it.id == modelId }?.tier ?: Tier.WHITE_DWARF
+        return Model(
+            id = modelId,
+            providerId = providerId,
+            displayName = tier.displayName,
+            tier = tier,
+            contextWindow = DEFAULT_CONTEXT_WINDOW,
+            isFree = freeModelSuffix?.let { modelId.endsWith(it) } == true,
+        )
+    }
+
+    const val DEFAULT_CONTEXT_WINDOW = 32_000
+}

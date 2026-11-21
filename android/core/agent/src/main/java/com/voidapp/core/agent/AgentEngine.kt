@@ -1,0 +1,280 @@
+package com.eivoid.core.agent
+
+import com.eivoid.core.agent.context.ContextManager
+import com.eivoid.core.agent.planner.Planner
+import com.eivoid.core.ai.AiProviderException
+import com.eivoid.core.ai.ChatChunk
+import com.eivoid.core.ai.ChatMessage
+import com.eivoid.core.ai.ChatRequest
+import com.eivoid.core.ai.Role
+import com.eivoid.core.ai.ToolCall
+import com.eivoid.core.ai.router.Candidate
+import com.eivoid.core.ai.router.Route
+import com.eivoid.core.ai.router.SmartRouter
+import com.eivoid.core.common.time.startOfMonthMillis
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.withTimeout
+
+/** The bounds of one run. */
+data class AgentLimits(
+    /** How many model round trips one run may take. */
+    val maxIterations: Int = 25,
+    /** How many tokens the model may produce in one run (approximated). */
+    val maxOutputTokens: Int = 32_000,
+    /** How long one model call may take before the router tries another. */
+    val modelTimeoutMillis: Long = 45_000,
+    /** How long one tool call may take. */
+    val toolTimeoutMillis: Long = 60_000,
+    /** How long the user has to answer a confirmation. */
+    val confirmationTimeoutMillis: Long = 300_000,
+)
+
+/**
+ * The agent loop: ask the model, run the tools it asks for, feed the results
+ * back, repeat until the model answers without tools.
+ *
+ * The loop is bounded by [limits] and every provider failure is contained:
+ * one dead provider does not end the run.
+ */
+class AgentEngine(
+    private val registry: ToolRegistry,
+    private val resolver: ProviderResolver,
+    private val router: SmartRouter = SmartRouter(),
+    private val contextManager: ContextManager = ContextManager(),
+    private val planner: Planner = Planner(),
+    private val limits: AgentLimits = AgentLimits(),
+    /** Null means "do not meter", which is what the unit tests use. */
+    private val usageMeter: UsageMeter? = null,
+) {
+
+    fun run(
+        task: String,
+        ctx: ToolContext,
+        /** Earlier user/assistant turns, oldest first, replayed to the model. */
+        history: List<ChatMessage> = emptyList(),
+    ): Flow<AgentEvent> = flow {
+        val targets = resolver.targets()
+        if (targets.isEmpty()) {
+            emit(AgentEvent.Failed("No AI provider is configured. Add a provider key in Settings."))
+            return@flow
+        }
+
+        val candidates = targets.map { Candidate(it.provider, it.model) }
+        val first = router.pick(task, candidates)
+        if (first == null) {
+            emit(AgentEvent.Failed("No model is available."))
+            return@flow
+        }
+        var route: Route = first
+
+        val plan = buildPlan(task, route, targets)
+        if (plan.isNotEmpty()) {
+            emit(AgentEvent.PlanUpdated(plan))
+        }
+        emit(AgentEvent.Thinking(route.tierName, route.reason))
+
+        val messages = mutableListOf(
+            ChatMessage(
+                role = Role.SYSTEM,
+                content = contextManager.systemPrompt(task, ctx.workspace, plan),
+            ),
+        )
+        messages += history
+        messages += ChatMessage(role = Role.USER, content = task)
+
+        val failedCandidates = mutableSetOf<String>()
+        var iterations = 0
+        var outputBudget = limits.maxOutputTokens
+        // How far the local token estimate was off, learned from the provider.
+        var calibration = 1.0f
+
+        while (iterations < limits.maxIterations) {
+            iterations++
+
+            val meter = usageMeter
+            val monthStart = startOfMonthMillis()
+            if (meter != null) {
+                val used = meter.used(route.model.tier, monthStart)
+                val allowed = meter.allowance(route.model.tier, monthStart)
+                if (used >= allowed) {
+                    emit(
+                        AgentEvent.Failed(
+                            "Your ${route.tierName} allowance for this month is used up.",
+                        ),
+                    )
+                    return@flow
+                }
+            }
+
+            val request = ChatRequest(
+                model = route.model.id,
+                messages = contextManager.trim(
+                    messages,
+                    (contextLimit(route) * calibration).toInt().coerceAtLeast(1),
+                ),
+                tools = registry.definitions(),
+                temperature = route.model.temperature ?: DEFAULT_TEMPERATURE,
+                topP = route.model.topP,
+                maxTokens = route.model.maxTokens ?: limits.maxOutputTokens,
+                stream = route.model.streaming,
+            )
+
+            var text = ""
+            val toolCalls = mutableListOf<ToolCall>()
+            var finishReason = "stop"
+            var promptTokens = 0
+            var completionTokens = 0
+
+            // The timeout must wrap the collection: a provider's `chat`
+            // returns a cold flow whose work happens when it is collected.
+            val failure: String? = try {
+                withTimeout(limits.modelTimeoutMillis) {
+                    val key = resolver.keyFor(route.providerId)
+                        ?: throw AiProviderException("No key for ${route.providerId}")
+                    providerFor(targets, route).chat(request, key).collect { chunk ->
+                        when (chunk) {
+                            is ChatChunk.Delta -> {
+                                text += chunk.text
+                                emit(AgentEvent.Token(chunk.text))
+                            }
+                            is ChatChunk.ToolCallDelta -> toolCalls += chunk.call
+                            is ChatChunk.Usage -> {
+                                promptTokens = chunk.promptTokens
+                                completionTokens = chunk.completionTokens
+                            }
+                            is ChatChunk.Finished -> finishReason = chunk.reason
+                        }
+                    }
+                }
+                null
+            } catch (error: TimeoutCancellationException) {
+                "${route.tierName} did not answer in time."
+            } catch (cancelled: CancellationException) {
+                // The user stopped the run; it is not a provider failure.
+                throw cancelled
+            } catch (error: Exception) {
+                error.message ?: "The model provider could not be reached."
+            }
+
+            if (failure != null) {
+                val fallback = router.next(task, candidates, failedCandidates + route.key)
+                if (fallback == null) {
+                    emit(AgentEvent.Failed(failure))
+                    return@flow
+                }
+                failedCandidates += route.key
+                route = fallback
+                emit(AgentEvent.Thinking(route.tierName, route.reason))
+                continue
+            }
+
+            // What the call cost. The provider's own numbers are used when it
+            // sends them; otherwise the output length is the best guess.
+            val spent = if (promptTokens > 0 || completionTokens > 0) {
+                promptTokens + completionTokens
+            } else {
+                (text.length + toolCalls.sumOf { it.arguments.toString().length }) / CHARS_PER_TOKEN
+            }
+            usageMeter?.record(route.model.tier, spent)
+            outputBudget -= spent
+
+            // The provider says how many tokens the request really took: use
+            // it to correct the local estimate for the next call.
+            val estimated = contextManager.estimateTokens(request.messages)
+            if (estimated > 0 && promptTokens > 0) {
+                calibration = promptTokens.toFloat() / estimated
+            }
+
+            if (text.isNotBlank()) {
+                messages += ChatMessage(role = Role.ASSISTANT, content = text)
+            }
+
+            if (toolCalls.isEmpty()) {
+                emit(AgentEvent.Finished(text.ifBlank { "Done." }))
+                return@flow
+            }
+
+            for (call in toolCalls) {
+                emit(AgentEvent.ToolCallStarted(call))
+                val result = runTool(call, ctx)
+                emit(AgentEvent.ToolCallFinished(call, result))
+                messages += ChatMessage(
+                    role = Role.TOOL,
+                    content = when (result) {
+                        is ToolResult.Success -> result.output
+                        is ToolResult.Error -> "Error: ${result.message}"
+                    },
+                    toolCallId = call.id,
+                )
+            }
+
+            if (outputBudget <= 0) {
+                emit(AgentEvent.Failed("The run used up its output budget."))
+                return@flow
+            }
+        }
+
+        emit(AgentEvent.Failed("The agent stopped after ${limits.maxIterations} steps."))
+    }
+
+    /**
+     * Runs a tool. A tool that needs the user's confirmation gets a longer
+     * window, because the timeout covers the wait for the answer.
+     */
+    /**
+     * How much of the model's window the request may use. The room for the
+     * answer is kept aside so a long answer cannot overflow the window.
+     */
+    private fun contextLimit(route: Route): Int {
+        val window = route.model.contextWindow
+        if (window <= 0) return Int.MAX_VALUE
+        return (window - RESERVED_OUTPUT_TOKENS).coerceAtLeast(MIN_CONTEXT_TOKENS)
+    }
+
+    private suspend fun runTool(call: ToolCall, ctx: ToolContext): ToolResult = try {
+        val needsConfirmation = registry.get(call.name)?.requiresConfirmation == true
+        val timeout = if (needsConfirmation) {
+            limits.confirmationTimeoutMillis
+        } else {
+            limits.toolTimeoutMillis
+        }
+        withTimeout(timeout) {
+            registry.execute(call.name, call.arguments, ctx)
+        }
+    } catch (error: TimeoutCancellationException) {
+        ToolResult.Error("${call.name} timed out")
+    } catch (cancelled: CancellationException) {
+        throw cancelled
+    } catch (error: Exception) {
+        ToolResult.Error(error.message ?: "${call.name} failed")
+    }
+
+    private suspend fun buildPlan(
+        task: String,
+        route: Route,
+        targets: List<ProviderTarget>,
+    ): List<String> {
+        if (!router.classify(task).isComplex) return emptyList()
+
+        val key = resolver.keyFor(route.providerId) ?: return emptyList()
+        return planner.plan(task, providerFor(targets, route), key, route.model.id)
+    }
+
+    private fun providerFor(targets: List<ProviderTarget>, route: Route) =
+        targets.first { it.provider.id == route.providerId }.provider
+
+    private companion object {
+        /** Rough characters-per-token ratio used when a provider sends no usage. */
+        const val CHARS_PER_TOKEN = 4
+
+        const val DEFAULT_TEMPERATURE = 0.2
+
+        /** Room kept aside in the context window for the answer. */
+        const val RESERVED_OUTPUT_TOKENS = 4_096
+
+        const val MIN_CONTEXT_TOKENS = 2_000
+    }
+}

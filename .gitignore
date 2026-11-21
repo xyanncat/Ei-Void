@@ -1,0 +1,45 @@
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*.jks
+*.keystore
+keystore.properties
+local.properties
+.dev.vars
+.render.env
+.clerk/
+
+# Android / Gradle
+android/.gradle/
+android/.kotlin/
+android/build/
+android/**/build/
+android/app/release/
+android/.idea/
+android/captures/
+*.apk
+*.aab
+*.iml
+
+# Node
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+coverage/
+**/coverage/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-error.log*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Source archives and extracted inputs
+_source/
+*.zip

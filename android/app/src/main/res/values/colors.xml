@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Chalk-on-ink brand surfaces. -->
+    <color name="void_surface">#050505</color>
+    <color name="void_primary">#F2F2EF</color>
+    <color name="ic_launcher_background">#050505</color>
+</resources>

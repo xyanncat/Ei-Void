@@ -1,0 +1,20 @@
+{
+  "name": "ei-void",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Ei Void — reminders and an on-device coding agent in one Android app, with one Discord bot and one website.",
+  "workspaces": [
+    "packages/*",
+    "services/*"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "build": "npm run build --workspaces --if-present",
+    "dev:web": "npm run dev --workspace @eivoid/web",
+    "dev:bot": "npm run dev --workspace @eivoid/bot"
+  }
+}

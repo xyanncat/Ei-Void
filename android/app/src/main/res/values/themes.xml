@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Void" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">?android:attr/colorBackground</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+
+        <!-- Android 12+ splash screen. -->
+        <item name="android:windowSplashScreenBackground">@color/void_surface</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_void_splash</item>
+        <item name="android:windowSplashScreenIconBackgroundColor">@color/void_surface</item>
+    </style>
+</resources>
