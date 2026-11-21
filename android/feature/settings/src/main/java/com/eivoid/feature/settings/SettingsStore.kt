@@ -51,7 +51,9 @@ class DataStoreSettingsStore(
     private val scope: CoroutineScope,
 ) : SettingsStore {
 
-    private val _theme = MutableStateFlow(ThemeMode.SYSTEM)
+    // OLED-first: a fresh install opens in dark mode. The appearance control
+    // in Customize can still switch to System or Light explicitly.
+    private val _theme = MutableStateFlow(ThemeMode.DARK)
     override val theme: StateFlow<ThemeMode> = _theme.asStateFlow()
 
     private val _preferredTier = MutableStateFlow<Tier?>(null)

@@ -18,8 +18,8 @@ object VoidColors {
     val paperDim = Color(0xFFE4E1D9)
     val white = Color(0xFFFFFFFF)
 
-    // Surfaces — the dark canvas is the night sky in the artwork.
-    val surfaceDark = Color(0xFF050505)
+    // Surfaces — OLED black for the assistant-first app.
+    val surfaceDark = Color(0xFF000000)
     val surfaceLight = Color(0xFFF3F1EA)
 
     // Text
@@ -67,11 +67,26 @@ object VoidColors {
     val outlineLight = Color(0xFF8A877F)
     val outlineVariantLight = Color(0xFFD5D1C7)
 
-    // The void: night-sky wash (dark) and paper wash (light).
-    val spaceTop = Color(0xFF050505)
-    val spaceBottom = Color(0xFF0E0E10)
+    // The void: OLED black (dark) and paper wash (light).
+    val spaceTop = Color(0xFF000000)
+    val spaceBottom = Color(0xFF000000)
     val dawnTop = Color(0xFFF3F1EA)
     val dawnBottom = Color(0xFFE9E5DC)
+
+    // OLED assistant home. The AI screen is pure black with charcoal chrome,
+    // matching the phone-first assistant layout. These are separate tokens so
+    // the reminders and code screens keep their existing palette untouched.
+    val oledBlack = Color(0xFF000000)
+    val oledCharcoal = Color(0xFF121214)
+    val oledSurface = Color(0xFF1A1A1D)
+    val oledSurfaceHigh = Color(0xFF232327)
+    val oledBorder = Color(0xFF2E2E33)
+    val oledTextPrimary = Color(0xFFFFFFFF)
+    val oledTextSecondary = Color(0xFF9C9CA3)
+    val oledAccentBlue = Color(0xFF2F6BFF)
+    val oledAccentAmber = Color(0xFFE7B35A)
+    val oledSuccess = Color(0xFF7FBF9A)
+    val oledDanger = Color(0xFFFF8A8A)
 
     // Tier markers, brightest to dimmest: chalk, graphite, stone.
     val tierRed = chalk

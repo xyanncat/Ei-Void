@@ -4,6 +4,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.DragInteraction
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -45,9 +46,11 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.eivoid.designsystem.component.VoidLogo
-import com.eivoid.designsystem.component.VoidCard
-import com.eivoid.designsystem.component.VoidStatusChip
+import com.eivoid.designsystem.component.EiCard
+import com.eivoid.designsystem.component.EiEmptyState
+import com.eivoid.designsystem.component.EiNotice
+import com.eivoid.designsystem.component.EiStatusPill
+import com.eivoid.designsystem.theme.VoidColors
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
@@ -93,9 +96,9 @@ fun ChatScreen(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             state.tier?.let { tier ->
-                VoidStatusChip(
+                EiStatusPill(
                     text = "Tier: $tier",
-                    color = MaterialTheme.colorScheme.secondary,
+                    color = VoidColors.oledTextSecondary,
                 )
             }
             Spacer(Modifier.weight(1f))
@@ -103,13 +106,17 @@ fun ChatScreen(
                 Text(
                     text = "Running",
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.secondary,
+                    color = VoidColors.oledAccentBlue,
                 )
             }
         }
 
         if (state.isRunning) {
-            LinearProgressIndicator(modifier = Modifier.fillMaxWidth().height(2.dp))
+            LinearProgressIndicator(
+                modifier = Modifier.fillMaxWidth().height(2.dp),
+                color = VoidColors.oledAccentBlue,
+                trackColor = VoidColors.oledSurfaceHigh,
+            )
         }
 
         if (state.entries.isEmpty()) {
@@ -177,10 +184,10 @@ private fun UserBubble(entry: ChatEntry.User) {
             Text(
                 text = entry.text,
                 style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                color = VoidColors.oledTextPrimary,
                 modifier = Modifier
                     .background(
-                        color = MaterialTheme.colorScheme.primaryContainer,
+                        color = VoidColors.oledSurfaceHigh,
                         shape = RoundedCornerShape(18.dp),
                     )
                     .padding(horizontal = 16.dp, vertical = 11.dp),
@@ -195,6 +202,7 @@ private fun AssistantBubble(entry: ChatEntry.Assistant) {
         Text(
             text = entry.text,
             style = MaterialTheme.typography.bodyLarge,
+            color = VoidColors.oledTextPrimary,
             modifier = Modifier.fillMaxWidth(),
         )
     }
@@ -202,13 +210,18 @@ private fun AssistantBubble(entry: ChatEntry.Assistant) {
 
 @Composable
 private fun PlanCard(entry: ChatEntry.Plan) {
-    VoidCard(modifier = Modifier.fillMaxWidth()) {
-        Text("Plan", style = MaterialTheme.typography.titleSmall)
+    EiCard(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            "Plan",
+            style = MaterialTheme.typography.titleSmall,
+            color = VoidColors.oledTextPrimary,
+        )
         Spacer(Modifier.height(6.dp))
         entry.steps.forEachIndexed { index, step ->
             Text(
                 text = "${index + 1}. $step",
                 style = MaterialTheme.typography.bodyMedium,
+                color = VoidColors.oledTextSecondary,
             )
             if (index != entry.steps.lastIndex) Spacer(Modifier.height(4.dp))
         }
@@ -217,37 +230,22 @@ private fun PlanCard(entry: ChatEntry.Plan) {
 
 @Composable
 private fun FailureCard(entry: ChatEntry.Failure) {
-    VoidCard(
+    EiNotice(
+        message = entry.message,
+        danger = true,
         modifier = Modifier.fillMaxWidth(),
-        containerColor = MaterialTheme.colorScheme.errorContainer,
-    ) {
-        Text(
-            text = entry.message,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onErrorContainer,
-        )
-    }
+    )
 }
 
 @Composable
 private fun EmptyChat(modifier: Modifier = Modifier) {
-    Column(
+    Box(
         modifier = modifier.fillMaxSize().padding(28.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
+        contentAlignment = Alignment.Center,
     ) {
-        VoidLogo(size = 88.dp, contentDescription = null)
-        Spacer(Modifier.height(20.dp))
-        Text(
-            text = "Ask Void to change something",
-            style = MaterialTheme.typography.headlineSmall,
-        )
-        Spacer(Modifier.height(8.dp))
-        Text(
-            text = "It reads and edits files, runs git, and asks before it deletes anything.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
+        EiEmptyState(
+            title = "Ask Ei Void to change something",
+            message = "It reads and edits files, runs git, and asks before it deletes anything.",
         )
     }
 }
@@ -266,11 +264,8 @@ private fun Composer(
             .fillMaxWidth()
             .padding(12.dp),
         shape = RoundedCornerShape(22.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        border = BorderStroke(
-            1.dp,
-            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f),
-        ),
+        color = VoidColors.oledSurface,
+        border = BorderStroke(1.dp, VoidColors.oledBorder),
     ) {
         Row(
             modifier = Modifier.padding(start = 8.dp, end = 8.dp, top = 6.dp, bottom = 6.dp),
@@ -280,10 +275,17 @@ private fun Composer(
                 value = value,
                 onValueChange = onValueChange,
                 modifier = Modifier.weight(1f),
-                placeholder = { Text("Describe the change…") },
+                placeholder = {
+                    Text(
+                        "Describe the change…",
+                        color = VoidColors.oledTextSecondary,
+                    )
+                },
                 enabled = enabled,
                 maxLines = 5,
-                textStyle = MaterialTheme.typography.bodyLarge,
+                textStyle = MaterialTheme.typography.bodyLarge.copy(
+                    color = VoidColors.oledTextPrimary,
+                ),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = Color.Transparent,
                     unfocusedBorderColor = Color.Transparent,
@@ -291,6 +293,9 @@ private fun Composer(
                     focusedContainerColor = Color.Transparent,
                     unfocusedContainerColor = Color.Transparent,
                     disabledContainerColor = Color.Transparent,
+                    cursorColor = VoidColors.oledAccentBlue,
+                    focusedTextColor = VoidColors.oledTextPrimary,
+                    unfocusedTextColor = VoidColors.oledTextPrimary,
                 ),
             )
             FilledIconButton(
@@ -298,11 +303,14 @@ private fun Composer(
                 enabled = isRunning || value.isNotBlank(),
                 colors = if (isRunning) {
                     IconButtonDefaults.filledIconButtonColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer,
-                        contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                        containerColor = VoidColors.oledSurfaceHigh,
+                        contentColor = VoidColors.oledTextPrimary,
                     )
                 } else {
-                    IconButtonDefaults.filledIconButtonColors()
+                    IconButtonDefaults.filledIconButtonColors(
+                        containerColor = VoidColors.oledAccentBlue,
+                        contentColor = Color.White,
+                    )
                 },
             ) {
                 if (isRunning) {

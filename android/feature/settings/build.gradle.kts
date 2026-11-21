@@ -21,6 +21,12 @@ android {
     buildFeatures {
         compose = true
     }
+    lint {
+        // The experimental opt-in detector intermittently crashes the lint
+        // worker with a metaspace OOM on this module. The compiler still
+        // enforces opt-in annotations; lint keeps every other check.
+        disable += setOf("UnsafeOptInUsageError", "UnsafeOptInUsageWarning")
+    }
 }
 
 dependencies {

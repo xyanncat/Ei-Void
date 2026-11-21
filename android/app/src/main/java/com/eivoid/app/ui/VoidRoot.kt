@@ -36,16 +36,12 @@ import androidx.core.view.WindowCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.clerk.api.Clerk
-import com.clerk.ui.auth.AuthMode
-import com.clerk.ui.auth.AuthView
 import com.eivoid.app.BuildConfig
 import com.eivoid.app.navigation.VoidNavHost
 import com.eivoid.designsystem.component.VoidBackground
-import com.eivoid.designsystem.component.VoidLogo
 import com.eivoid.designsystem.theme.VoidColors
 import com.eivoid.designsystem.theme.VoidTheme
-import com.eivoid.feature.auth.LoginScreen
-import com.eivoid.feature.auth.voidClerkTheme
+import com.eivoid.feature.auth.EiLoginScreen
 import com.eivoid.feature.settings.SettingsViewModel
 import com.eivoid.feature.settings.ThemeMode
 
@@ -106,7 +102,7 @@ private fun ClerkGate() {
         if (BuildConfig.DEBUG) {
             SignedInShell(userName = "debug user", debugBypass = true)
         } else {
-            LoginScreen(onLoggedIn = {}, showDebugSignIn = false)
+            EiLoginScreen(onLoggedIn = {}, showDebugSignIn = false)
         }
         return
     }
@@ -116,7 +112,7 @@ private fun ClerkGate() {
 
     when {
         !initialized -> LoadingGate()
-        user == null -> ClerkSignInGate()
+        user == null -> EiLoginScreen(onLoggedIn = {})
         else -> SignedInShell(
             userName = displayNameOf(user?.firstName, user?.lastName, user?.username),
             debugBypass = false,
@@ -194,32 +190,6 @@ private fun LoadingGate() {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-    }
-}
-
-@Composable
-private fun ClerkSignInGate() {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        AuthView(
-            modifier = Modifier.fillMaxSize(),
-            clerkTheme = voidClerkTheme(),
-            logo = { VoidLogo(size = 56.dp) },
-            persistIdentifiers = false,
-            isDismissible = false,
-            onAuthComplete = {
-                // The userFlow observer above moves the gate to the app.
-            },
-            mode = AuthMode.SignInOrUp,
-        )
-        Text(
-            text = "One Clerk account for every way in.",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 28.dp),
-        )
     }
 }
 

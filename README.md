@@ -2,14 +2,16 @@
 
 # Ei Void
 
-**Reminders and an on-device coding agent, in one Android app.**
+**An OLED AI assistant that also keeps your bills and your code in reach.**
 
 </div>
 
-Ei Void merges two products that were built separately:
+Ei Void is one Android app built around a quiet, black-canvas assistant:
 
-- **Reminders** — local-first bill, renewal and one-time payment tracking with exact Android alarms, Mark Paid / Snooze actions, optional email and Discord delivery.
-- **Agent** — a native Android AI coding agent that clones a GitHub repository, edits it through guarded tools, and commits/pushes the result.
+- **Assistant** — an AI-first home with a slide-out drawer, prompt chips, a floating ask bar and a conversation view. It uses the user's own AI provider keys.
+- **Library** — local-first bill, renewal and one-time payment reminders with exact Android alarms, Mark Paid / Snooze, optional email and Discord delivery.
+- **Projects** — a native Android AI coding agent that clones a GitHub repository, edits it through guarded tools, and commits/pushes the result.
+- **Customize** — one place for Ei Void identity, model tiers, provider keys, and the Ei Snore Discord notification connection.
 
 One app, one Clerk account, one Discord bot, one website, one Postgres database.
 
@@ -17,10 +19,10 @@ One app, one Clerk account, one Discord bot, one website, one Postgres database.
 
 ```text
 android/                 Kotlin + Compose application (com.eivoid.app)
-  app/                   shell, Hilt, navigation, manifest
+  app/                   shell, Hilt, drawer navigation, manifest
   core/                  common, security, database, git, workspace, ai, agent, reminders
-  feature/               auth, repos, chat, workspace, reminders, settings
-  designsystem/          theme and components
+  feature/               assistant, auth, repos, chat, workspace, reminders, settings
+  designsystem/          OLED tokens and the Ei component kit
 services/
   web/                   Express + EJS site, dashboard, app API
   bot/                   Discord.js worker and reminder scheduler
@@ -35,6 +37,21 @@ docs/
   security/              threat model and secret rotation
   runbooks/              deploy and rollback
 ```
+
+## Design
+
+The UI is deliberately one system, not a restyled template:
+
+- Pure black OLED canvas, charcoal surfaces, 1px hairline borders, white type,
+  muted gray secondary text and a single electric-blue action accent.
+- One shared component kit (`designsystem/component/EiComponents.kt`):
+  `EiScreen`, `EiTopBar`, `EiCard`, `EiListRow`, `EiPill`, `EiSegmented`,
+  `EiTextField`, `EiPrimaryButton`, `EiNotice`, `EiEmptyState`, `EiStat`.
+- A slide-out drawer replaces the old bottom navigation. Chat, Images, Library,
+  Customize, Projects, Remote and Explore are drawer destinations.
+- Screens are designed from scratch: assistant home, library, reminder editor,
+  projects, customize, usage, remote, explore, login, and the files/chat
+  workspace shell.
 
 ## Build the app
 
@@ -100,27 +117,31 @@ Set the `sync: false` values in the Render dashboard. The only mandatory secret 
 npm run typecheck
 npm test
 
-# Android: unit tests + debug APK
+# Android: full unit suite, lint, and the debug APK
 cd android
-./gradlew :app:assembleDebug :core:reminders:testDebugUnitTest :feature:reminders:testDebugUnitTest
+./gradlew testDebugUnitTest :app:lintDebug :app:assembleDebug
 ```
 
 ## Status
 
 - [x] New repo skeleton and Android package rebrand
-- [x] Android debug APK builds
-- [x] Reminder domain, alarms, notifications and UI (39 core + 20 feature tests)
+- [x] Android debug APK builds; full unit suite and lint green
+- [x] OLED design system and every top-level screen rebuilt from scratch
+- [x] Assistant home, drawer, library, editor, projects, customize, usage, login
+- [x] Reminder domain, alarms, notifications and the redesigned library
 - [x] Shared backend packages (99 tests)
 - [x] Unified Discord bot (62 tests)
 - [x] Unified website, dashboard, link flow and app API (41 tests)
-- [x] Emulator walkthrough: add → alarm → notification → Mark paid → Snooze
-- [x] Redmi 10 Prime walkthrough: installed, added a reminder, exact alarm fired, notification posted
-- [ ] Usage sync from the app to the dashboard/bot (API and device keys are ready)
+- [x] Emulator walkthrough: add → alarm → notification → Mark paid; new UI screens
+- [x] Redmi 10 Prime: final redesigned APK installed, security scan passed, launched
+- [ ] App-to-dashboard usage sync (API and device keys are ready)
 - [ ] Real Clerk/Discord/Postgres credentials and a Render deployment
+- [ ] Discord OAuth link in Customize (the section and API are ready; app hop is a stub)
 - [ ] Signed release APK
 
 Note: MIUI 14 still rejects `adb install` with `INSTALL_FAILED_USER_RESTRICTED` on
-this Redmi even with the two developer toggles on. The working install path was
-the phone's Chrome/package installer over the LAN; see `docs/qa/README.md`.
+this Redmi even with the two developer toggles on. The working install path is
+the phone's Files/package installer; the final build passed Xiaomi's security
+scan. See `docs/qa/README.md`.
 
 See `docs/superpowers/plans/2026-11-21-ei-void-unification.md` for the full task list and `docs/qa/README.md` for the device checklist.

@@ -38,5 +38,6 @@ include(
     ":feature:workspace",
     ":feature:settings",
     ":feature:reminders",
+    ":feature:assistant",
     ":designsystem",
 )

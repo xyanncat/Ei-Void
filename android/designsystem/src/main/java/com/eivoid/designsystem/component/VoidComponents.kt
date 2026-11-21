@@ -19,12 +19,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.outlined.Menu
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -34,6 +36,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -99,6 +102,13 @@ fun VoidSectionTitle(text: String, modifier: Modifier = Modifier) {
     }
 }
 
+/**
+ * The drawer opener for top-level screens. The app shell provides it; screens
+ * that render [VoidTopBar] without a back affordance automatically get a menu
+ * button, so every top-level destination can reach the navigation drawer.
+ */
+val LocalOpenDrawer = compositionLocalOf<(() -> Unit)?> { null }
+
 /** A screen header with an optional back affordance and trailing actions. */
 @Composable
 fun VoidTopBar(
@@ -111,8 +121,9 @@ fun VoidTopBar(
     Row(
         modifier = modifier
             .fillMaxWidth()
+            .statusBarsPadding()
             .padding(
-                start = if (onBack != null) 4.dp else 20.dp,
+                start = if (onBack != null || LocalOpenDrawer.current != null) 4.dp else 20.dp,
                 end = 12.dp,
                 top = 10.dp,
                 bottom = 6.dp,
@@ -122,6 +133,12 @@ fun VoidTopBar(
         if (onBack != null) {
             IconButton(onClick = onBack) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+            }
+        } else {
+            LocalOpenDrawer.current?.let { openDrawer ->
+                IconButton(onClick = openDrawer) {
+                    Icon(Icons.Outlined.Menu, contentDescription = "Open navigation")
+                }
             }
         }
         Column(modifier = Modifier.weight(1f)) {

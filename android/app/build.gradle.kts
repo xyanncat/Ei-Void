@@ -135,6 +135,7 @@ dependencies {
     implementation(project(":core:git"))
     implementation(project(":core:workspace"))
     implementation(project(":core:reminders"))
+    implementation(project(":feature:assistant"))
     implementation(project(":feature:auth"))
     implementation(project(":feature:chat"))
     implementation(project(":feature:repos"))
