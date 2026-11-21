@@ -1,0 +1,16 @@
+<form class="waitlist-form" action="/waitlist" method="post">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <label class="sr-only" for="waitlist-email">Email address</label>
+  <input
+    id="waitlist-email"
+    class="waitlist-input"
+    type="email"
+    name="email"
+    autocomplete="email"
+    placeholder="you@example.com"
+    maxlength="254"
+    required
+  >
+  <button class="btn btn-primary" type="submit">Join the preview</button>
+</form>
+<p class="waitlist-note">One note when the GitHub bridge and signed APK are ready. No marketing list.</p>

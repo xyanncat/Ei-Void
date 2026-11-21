@@ -1,0 +1,29 @@
+<div class="how-grid">
+  <ol class="steps">
+    <% steps.forEach(function (step) { %>
+      <li class="step">
+        <span class="step-number"><%= step.number %></span>
+        <div>
+          <h3><%= step.title %></h3>
+          <p><%= step.body %></p>
+        </div>
+      </li>
+    <% }); %>
+  </ol>
+
+  <div class="terminal-reel">
+    <div class="terminal">
+      <div class="terminal-bar">
+        <span class="terminal-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span class="terminal-title">void · ~/repos/nebula</span>
+      </div>
+      <pre class="terminal-code"><code><span class="prompt">›</span> fix the flaky retry in sync.ts
+<span class="tool">⏺</span> read <span class="path">src/sync.ts</span>
+<span class="tool">⏺</span> edit <span class="path">src/sync.ts</span>
+<span class="ok">✓</span> 2 files changed
+<span class="prompt">›</span> push
+<span class="warn">?</span> confirm push to <span class="path">origin/main</span></code></pre>
+    </div>
+    <p class="terminal-caption">Destructive calls stop for a tap. The agent does not push on its own.</p>
+  </div>
+</div>

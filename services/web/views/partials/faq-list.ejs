@@ -1,0 +1,11 @@
+<div class="faq-list">
+  <% items.forEach(function (item) { %>
+    <details class="faq-item">
+      <summary>
+        <span><%= item.q %></span>
+        <span class="faq-mark" aria-hidden="true"></span>
+      </summary>
+      <p><%= item.a %></p>
+    </details>
+  <% }); %>
+</div>

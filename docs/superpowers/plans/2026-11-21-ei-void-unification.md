@@ -10,6 +10,8 @@
 
 **Spec:** `docs/superpowers/specs/2026-11-21-ei-void-unification-design.md`
 
+**Current status (2026-11-21):** Phases 0–6 are implemented and verified. Android unit/build green (39 core reminder + 20 feature tests), Node workspaces green (202 tests), and the merged APK passed an emulator walkthrough (add → exact alarm → notification → Mark paid → Snooze). Remaining: app usage sync, real Clerk/Discord/Postgres credentials, signed release, and the Redmi install (blocked by MIUI's Install via USB toggle).
+
 ## Global Constraints
 
 - Product name is **Ei Void**; applicationId and namespace are `com.eivoid.app`; Kotlin base package is `com.eivoid`.

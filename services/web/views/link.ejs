@@ -1,0 +1,33 @@
+<section class="link-shell">
+  <div class="shell link-card">
+    <div class="link-cat" aria-hidden="true">
+      <img src="/brand/icon-192.png" width="96" height="96" alt="">
+    </div>
+    <p class="eyebrow">Discord link · single use</p>
+    <h1>Link <em><%= discordUsername %></em><br>to Ei Void.</h1>
+    <p class="page-lede">
+      You are signed in as <strong><%= accountEmail || 'your Clerk account' %></strong>.
+      Confirming connects this Discord account to that Clerk account for the bot
+      and the dashboard. It does not sign you in to the Android app; the app uses
+      Clerk directly.
+    </p>
+
+    <form class="link-form" action="/link" method="post">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <input type="hidden" name="code" value="<%= code %>">
+      <button class="btn btn-primary" type="submit">Confirm @<%= discordUsername %></button>
+    </form>
+
+    <p class="link-note">
+      <span class="status-dot" aria-hidden="true"></span>
+      The code expires at
+      <time datetime="<%= expiresAt.toISOString() %>"><%= expiresAt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) %></time>
+      and cannot be used twice.
+    </p>
+    <p class="link-small">
+      Not you? <a class="text-link" href="/">Leave this page</a> and run
+      <span class="mono">/link</span> again in Discord. The signed cookie written
+      after this form is for form integrity only; Clerk holds the session.
+    </p>
+  </div>
+</section>

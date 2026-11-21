@@ -1,0 +1,83 @@
+<section class="page-hero">
+  <div class="hero-stars" aria-hidden="true"></div>
+  <div class="shell">
+    <p class="eyebrow"><span class="status-dot" aria-hidden="true"></span> Plans · developer preview</p>
+    <h1>A seat for<br><em>every orbit.</em></h1>
+    <p class="page-lede">
+      Start free. When the preview becomes a product, Pro adds the middle tier
+      and Max lets the cat stay up all night. Nothing is charged today.
+    </p>
+  </div>
+</section>
+
+<section class="section section-tight">
+  <div class="shell">
+    <div class="callout callout-quiet">
+      <span class="callout-mark" aria-hidden="true">i</span>
+      <p>
+        <strong>Preview pricing.</strong> Checkout is not live. The plans below
+        are the current intent, and limits are enforced locally by the app
+        while the usage sync is being built.
+      </p>
+    </div>
+
+    <div class="plans-grid plans-grid-page">
+      <% plans.forEach(function (plan) { %>
+        <%- include('partials/plan', { plan: plan }) %>
+      <% }); %>
+    </div>
+
+    <p class="plan-note">
+      Token counters are per billing period · a tier's multiplier decides how
+      much of the budget it may consume · prices are in INR
+    </p>
+  </div>
+</section>
+
+<section class="section section-alt">
+  <div class="shell">
+    <div class="section-head">
+      <p class="kicker">What is a tier?</p>
+      <h2 class="section-title">Effort, not a model menu.</h2>
+      <p class="section-lede">
+        The router maps the work to a tier. You can override the preferred tier
+        in Settings; the agent still chooses the exact model.
+      </p>
+    </div>
+    <%- include('partials/tier-grid') %>
+  </div>
+</section>
+
+<section class="section">
+  <div class="shell faq-layout">
+    <div class="faq-head">
+      <p class="kicker">Questions</p>
+      <h2 class="section-title">Before the card comes out.</h2>
+      <p class="section-lede">
+        There is no card yet. The preview is free, and the honest limits are in
+        the answers.
+      </p>
+      <a class="text-link" href="/docs/getting-started">Read the setup guide <span aria-hidden="true">→</span></a>
+    </div>
+    <%- include('partials/faq-list', { items: faqs }) %>
+  </div>
+</section>
+
+<section class="waitlist-section" id="waitlist">
+  <div class="shell waitlist">
+    <div class="waitlist-cat" aria-hidden="true">
+      <img src="/brand/cat.jpg" width="220" height="220" alt="">
+    </div>
+    <div class="waitlist-copy">
+      <p class="kicker">Early access</p>
+      <h2 class="section-title">Get the first orbit.</h2>
+      <p class="section-lede">
+        Leave an email. When the gateway and the signed APK are ready, you get
+        one note — not a drip campaign from the void.
+      </p>
+    </div>
+    <div class="waitlist-action">
+      <%- include('partials/waitlist') %>
+    </div>
+  </div>
+</section>

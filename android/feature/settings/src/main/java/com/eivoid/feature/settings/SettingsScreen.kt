@@ -50,10 +50,12 @@ fun SettingsScreen(
     onLoggedOut: () -> Unit,
     onOpenUsage: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel(),
+    reminderPrefs: ReminderPreferencesViewModel = hiltViewModel(),
 ) {
     val theme by viewModel.theme.collectAsStateWithLifecycle()
     val preferredTier by viewModel.preferredTier.collectAsStateWithLifecycle()
     val plan by viewModel.plan.collectAsStateWithLifecycle()
+    val reminderSettings by reminderPrefs.settings.collectAsStateWithLifecycle()
 
     var showProviderKeys by remember { mutableStateOf(false) }
     var showSignOutDialog by remember { mutableStateOf(false) }
@@ -61,7 +63,7 @@ fun SettingsScreen(
     Column(modifier = Modifier.fillMaxSize()) {
         VoidTopBar(
             title = "Settings",
-            subtitle = "Make Void yours",
+            subtitle = "Make Ei Void yours",
         )
 
         Column(
@@ -78,6 +80,13 @@ fun SettingsScreen(
                 preferredTier = preferredTier,
                 onSelect = viewModel::setPreferredTier,
                 onOpenUsage = onOpenUsage,
+            )
+
+            NotificationSettingsCard(
+                settings = reminderSettings,
+                onLeadDays = reminderPrefs::setLeadDays,
+                onNotifyTime = reminderPrefs::setNotifyTime,
+                onEmailEnabled = reminderPrefs::setEmailEnabled,
             )
 
             VoidCard(
@@ -124,6 +133,19 @@ fun SettingsScreen(
             }
 
             SignOutCard(onClick = { showSignOutDialog = true })
+
+            DiscordConnectionCard()
+
+            PermissionStatusCard()
+
+            DeleteDataCard(
+                email = "",
+                onDelete = {
+                    reminderPrefs.deleteAllReminders()
+                    viewModel.signOut()
+                    onLoggedOut()
+                },
+            )
         }
     }
 
@@ -168,7 +190,7 @@ private fun AppearanceCard(
         VoidSectionTitle("Appearance")
         Spacer(Modifier.height(8.dp))
         Text(
-            text = "Follow the system, or pin Void to the light or the dark.",
+            text = "Follow the system, or pin Ei Void to the light or the dark.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -203,7 +225,7 @@ private fun TierCard(
         VoidSectionTitle("Model tier")
         Spacer(Modifier.height(8.dp))
         Text(
-            text = "Void hides the provider's model names. Pick a tier, or let the " +
+            text = "Ei Void hides the provider's model names. Pick a tier, or let the " +
                 "router choose one from the task.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,

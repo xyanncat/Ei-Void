@@ -33,6 +33,14 @@ object VoidColors {
     val danger = Color(0xFFFF8A8A)
     val dangerOnLight = Color(0xFFB3261E)
 
+    // Reminder accent. A warm lime/amber pair marks due dates without
+    // introducing a second brand colour: it reads as "attention" on both the
+    // ink and the paper surface.
+    val reminderAccent = Color(0xFFD7E36B)
+    val reminderAmber = Color(0xFFE9B949)
+    val reminderAccentOnLight = Color(0xFF5C6410)
+    val reminderAmberOnLight = Color(0xFF7A4F00)
+
     // Surface containers (Material 3.2+ roles). Without them the nav bar,
     // dialogs and cards fall back to the baseline purple/pink palette.
     val darkSurfaceContainerLowest = Color(0xFF070708)

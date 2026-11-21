@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <%- include('partials/head') %>
+</head>
+<body class="<%= page.bodyClass || '' %>">
+  <a class="skip-link" href="#main">Skip to content</a>
+  <%- include('partials/nav') %>
+  <main id="main" class="site-main">
+    <%- body %>
+  </main>
+  <%- include('partials/footer') %>
+  <script src="/js/site.js" defer></script>
+</body>
+</html>

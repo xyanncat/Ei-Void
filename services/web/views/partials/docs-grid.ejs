@@ -1,0 +1,10 @@
+<div class="doc-grid">
+  <% items.forEach(function (entry) { %>
+    <a class="doc-card" href="/docs/<%= entry.slug %>">
+      <p class="doc-kicker">Guide <span aria-hidden="true">/</span> <%= entry.slug %></p>
+      <h3><%= entry.title %></h3>
+      <p><%= entry.description %></p>
+      <span class="doc-arrow" aria-hidden="true">→</span>
+    </a>
+  <% }); %>
+</div>

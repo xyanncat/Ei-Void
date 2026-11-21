@@ -1,0 +1,85 @@
+<section class="page-hero">
+  <div class="hero-stars" aria-hidden="true"></div>
+  <div class="shell">
+    <p class="eyebrow"><span class="status-dot" aria-hidden="true"></span> Features</p>
+    <h1>Small phone.<br><em>Real tools.</em></h1>
+    <p class="page-lede">
+      Ei Void is not a chat window pretending to be an IDE. It is a tool-using
+      agent with a repository on disk, a real git client and a firm hand on the
+      boundary.
+    </p>
+    <div class="page-actions">
+      <a class="btn btn-primary" href="/download">Get the preview</a>
+      <a class="btn btn-ghost" href="/docs/getting-started">Build it <span class="arrow" aria-hidden="true">→</span></a>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="shell">
+    <div class="section-head">
+      <p class="kicker">Inside the shell</p>
+      <h2 class="section-title">Everything the agent can touch.</h2>
+      <p class="section-lede">
+        The model chooses tools; the tools are typed and guarded. The loop is
+        small enough to explain, and the boundary is boring on purpose.
+      </p>
+    </div>
+    <div class="feature-grid">
+      <% features.forEach(function (feature) { %>
+        <article class="feature">
+          <p class="feature-index"><%= feature.index %></p>
+          <h3><%= feature.title %></h3>
+          <p><%= feature.body %></p>
+        </article>
+      <% }); %>
+    </div>
+  </div>
+</section>
+
+<section class="section section-alt">
+  <div class="shell">
+    <div class="section-head">
+      <p class="kicker">The loop</p>
+      <h2 class="section-title">Watch the tools, not the magic.</h2>
+      <p class="section-lede">
+        Every step is a tool call you can see. Nothing is pushed until you
+        confirm it.
+      </p>
+    </div>
+    <%- include('partials/how') %>
+  </div>
+</section>
+
+<section class="section">
+  <div class="shell">
+    <div class="section-head">
+      <p class="kicker">Tiers</p>
+      <h2 class="section-title">Three temperatures, one router.</h2>
+      <p class="section-lede">
+        A tier is a promise about effort, not a model name. The router picks
+        the exact provider and model, and the usage ledger keeps score.
+      </p>
+    </div>
+    <%- include('partials/tier-grid') %>
+    <div class="section-cta">
+      <a class="btn btn-ghost" href="/pricing">See what each plan includes <span class="arrow" aria-hidden="true">→</span></a>
+    </div>
+  </div>
+</section>
+
+<section class="section section-alt">
+  <div class="shell narrow center">
+    <p class="kicker">One more thing</p>
+    <h2 class="section-title">The cat is not decoration.</h2>
+    <p class="section-lede">
+      Gatete is the reminder that a coding agent should feel like a companion,
+      not a control panel. The chalk lines are the interface; the void is the
+      quiet around it.
+    </p>
+    <div class="page-actions center-actions">
+      <a class="btn btn-primary" href="/#waitlist">Join the preview</a>
+      <a class="btn btn-ghost" href="/bot">Meet the Discord bot <span class="arrow" aria-hidden="true">→</span></a>
+    </div>
+  </div>
+</section>

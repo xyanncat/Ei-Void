@@ -23,8 +23,10 @@ val clerkPublishableKey: String =
     localProperties.getProperty("clerk.publishableKey")
         ?: System.getenv("CLERK_PUBLISHABLE_KEY")
         ?: ""
-val voidBackendUrl: String =
-    localProperties.getProperty("void.backendUrl")
+val eiVoidApiUrl: String =
+    localProperties.getProperty("ei-void.apiUrl")
+        ?: localProperties.getProperty("void.backendUrl")
+        ?: System.getenv("EI_VOID_API_URL")
         ?: System.getenv("VOID_BACKEND_URL")
         ?: ""
 // Clerk Account Portal, where a user links GitHub to their Clerk account.
@@ -77,7 +79,7 @@ android {
         testInstrumentationRunner = "com.eivoid.app.HiltTestRunner"
 
         buildConfigField("String", "CLERK_PUBLISHABLE_KEY", "\"$clerkPublishableKey\"")
-        buildConfigField("String", "VOID_BACKEND_URL", "\"$voidBackendUrl\"")
+        buildConfigField("String", "EI_VOID_API_URL", "\"$eiVoidApiUrl\"")
         buildConfigField("String", "CLERK_ACCOUNT_PORTAL_URL", "\"$clerkAccountPortalUrl\"")
     }
 
@@ -132,11 +134,13 @@ dependencies {
     implementation(project(":core:database"))
     implementation(project(":core:git"))
     implementation(project(":core:workspace"))
+    implementation(project(":core:reminders"))
     implementation(project(":feature:auth"))
     implementation(project(":feature:chat"))
     implementation(project(":feature:repos"))
     implementation(project(":feature:workspace"))
     implementation(project(":feature:settings"))
+    implementation(project(":feature:reminders"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)
@@ -151,6 +155,8 @@ dependencies {
     implementation(libs.compose.ui.graphics)
     implementation(libs.compose.ui.tooling.preview)
     implementation(libs.compose.material3)
+    // The root Clerk gate hosts AuthView directly when signed out.
+    implementation(libs.clerk.android.ui)
     debugImplementation(libs.compose.ui.tooling)
 
     implementation(libs.hilt.android)

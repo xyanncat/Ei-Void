@@ -37,5 +37,6 @@ include(
     ":feature:repos",
     ":feature:workspace",
     ":feature:settings",
+    ":feature:reminders",
     ":designsystem",
 )

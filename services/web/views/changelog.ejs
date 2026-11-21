@@ -1,0 +1,48 @@
+<section class="page-hero page-hero-compact">
+  <div class="hero-stars" aria-hidden="true"></div>
+  <div class="shell">
+    <p class="eyebrow"><span class="status-dot" aria-hidden="true"></span> Changelog</p>
+    <h1>Orbit by<br><em>orbit.</em></h1>
+    <p class="page-lede">
+      What changed, what broke, and what is still on the pad. No silent
+      rewrites of the story.
+    </p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="shell timeline">
+    <% changelog.forEach(function (entry) { %>
+      <article class="timeline-entry">
+        <div class="timeline-aside">
+          <p class="timeline-version">v<%= entry.version %></p>
+          <p class="timeline-date"><%= entry.date %></p>
+        </div>
+        <div class="timeline-body">
+          <h2><%= entry.title %></h2>
+          <ul class="check-list">
+            <% entry.items.forEach(function (item) { %>
+              <li><span class="tick" aria-hidden="true">✓</span><%= item %></li>
+            <% }); %>
+          </ul>
+        </div>
+      </article>
+    <% }); %>
+  </div>
+</section>
+
+<section class="section section-alt">
+  <div class="shell narrow center">
+    <p class="kicker">Next</p>
+    <h2 class="section-title">The bridge, then the sync.</h2>
+    <p class="section-lede">
+      The next milestones are the deployed GitHub bridge and the app usage
+      snapshot that lets <span class="mono">/usage</span> tell the truth. Join
+      the list or read the docs in the meantime.
+    </p>
+    <div class="page-actions center-actions">
+      <a class="btn btn-primary" href="/#waitlist">Join the preview</a>
+      <a class="btn btn-ghost" href="/docs">Read the docs <span class="arrow" aria-hidden="true">→</span></a>
+    </div>
+  </div>
+</section>

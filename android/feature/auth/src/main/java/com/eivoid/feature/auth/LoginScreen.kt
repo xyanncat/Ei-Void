@@ -69,13 +69,13 @@ fun LoginScreen(
             Spacer(Modifier.height(20.dp))
 
             Text(
-                text = "VOID",
-                style = MaterialTheme.typography.displayMedium.copy(letterSpacing = 12.sp),
+                text = "EI VOID",
+                style = MaterialTheme.typography.displayMedium.copy(letterSpacing = 10.sp),
                 color = MaterialTheme.colorScheme.onBackground,
             )
             Spacer(Modifier.height(10.dp))
             Text(
-                text = "A coding agent that lives on your phone.",
+                text = "Reminders and a coding agent, on your phone.",
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
@@ -91,7 +91,7 @@ fun LoginScreen(
                     )
                     Spacer(Modifier.height(6.dp))
                     Text(
-                        text = "Add clerk.publishableKey and void.backendUrl to local.properties, " +
+                        text = "Add clerk.publishableKey and ei-void.apiUrl to local.properties, " +
                             "then rebuild.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -152,7 +152,7 @@ fun LoginScreen(
                     Spacer(Modifier.height(6.dp))
                     Text(
                         text = "Your Clerk account is not linked to GitHub yet. Connect it once " +
-                            "so Void can clone and push.",
+                            "so Ei Void can clone and push.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )

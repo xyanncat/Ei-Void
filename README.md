@@ -93,15 +93,30 @@ Set the `sync: false` values in the Render dashboard. The only mandatory secret 
 - The bot is locked to one Discord guild and never uses privileged intents.
 - Repository content, prompts and AI provider keys never reach the server.
 
+## Verify
+
+```bash
+# Node: 202 tests across the five packages, web and bot
+npm run typecheck
+npm test
+
+# Android: unit tests + debug APK
+cd android
+./gradlew :app:assembleDebug :core:reminders:testDebugUnitTest :feature:reminders:testDebugUnitTest
+```
+
 ## Status
 
 - [x] New repo skeleton and Android package rebrand
 - [x] Android debug APK builds
-- [ ] Reminder domain and UI
-- [ ] Shared backend packages
-- [ ] Unified Discord bot
-- [ ] Unified website and dashboard
-- [ ] Usage sync
-- [ ] CI, signed release and Render deployment
+- [x] Reminder domain, alarms, notifications and UI (39 core + 20 feature tests)
+- [x] Shared backend packages (99 tests)
+- [x] Unified Discord bot (62 tests)
+- [x] Unified website, dashboard, link flow and app API (41 tests)
+- [x] Emulator walkthrough: add → alarm → notification → Mark paid → Snooze
+- [ ] Redmi install: MIUI blocks sideloading until **Developer options → Install via USB** is enabled
+- [ ] Usage sync from the app to the dashboard/bot (API and device keys are ready)
+- [ ] Real Clerk/Discord/Postgres credentials and a Render deployment
+- [ ] Signed release APK
 
-See `docs/superpowers/plans/2026-11-21-ei-void-unification.md` for the full task list.
+See `docs/superpowers/plans/2026-11-21-ei-void-unification.md` for the full task list and `docs/qa/README.md` for the device checklist.

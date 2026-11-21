@@ -1,0 +1,20 @@
+<section class="page-hero page-hero-compact">
+  <div class="hero-stars" aria-hidden="true"></div>
+  <div class="shell">
+    <p class="eyebrow"><span class="status-dot" aria-hidden="true"></span> Documentation</p>
+    <h1>Read the<br><em>map.</em></h1>
+    <p class="page-lede">
+      Build the Android app, deploy the GitHub bridge, run the Discord worker.
+      Every page is written for the person who will type the commands.
+    </p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="shell">
+    <%- include('../partials/docs-grid', { items: docs }) %>
+    <div class="section-cta">
+      <a class="btn btn-ghost" href="<%= site.repoUrl %>" target="_blank" rel="noreferrer">Read the source <span class="arrow" aria-hidden="true">→</span></a>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,111 @@
+<section class="page-hero">
+  <div class="hero-stars" aria-hidden="true"></div>
+  <div class="shell">
+    <p class="eyebrow"><span class="status-dot" aria-hidden="true"></span> Coding agent</p>
+    <h1>Code from<br><em>the void.</em></h1>
+    <p class="page-lede">
+      The agent half of Ei Void is a phone-native workspace: a real git
+      repository on disk, a typed tool registry and a model tier chosen for the
+      work. You review the diff; you approve the push.
+    </p>
+    <div class="page-actions">
+      <a class="btn btn-primary" href="/download">Get the preview</a>
+      <a class="btn btn-ghost" href="/docs/getting-started">Build it <span class="arrow" aria-hidden="true">→</span></a>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="shell">
+    <div class="section-head">
+      <p class="kicker">Inside the shell</p>
+      <h2 class="section-title">Everything the agent can touch.</h2>
+      <p class="section-lede">
+        The model chooses tools; the tools are typed and guarded. The loop is
+        small enough to explain, and the boundary is boring on purpose.
+      </p>
+    </div>
+    <div class="feature-grid">
+      <% features.forEach(function (feature) { %>
+        <article class="feature">
+          <p class="feature-index"><%= feature.index %></p>
+          <h3><%= feature.title %></h3>
+          <p><%= feature.body %></p>
+        </article>
+      <% }); %>
+    </div>
+  </div>
+</section>
+
+<section class="section section-alt">
+  <div class="shell">
+    <div class="section-head">
+      <p class="kicker">The loop</p>
+      <h2 class="section-title">Watch the tools, not the magic.</h2>
+    </div>
+    <%- include('partials/how') %>
+  </div>
+</section>
+
+<section class="section">
+  <div class="shell">
+    <div class="section-head">
+      <p class="kicker">Tiers</p>
+      <h2 class="section-title">Three temperatures, one router.</h2>
+      <p class="section-lede">
+        A tier is a promise about effort, not a model name. The router picks
+        the provider and model, and the usage ledger keeps score.
+      </p>
+    </div>
+    <%- include('partials/tier-grid') %>
+  </div>
+</section>
+
+<section class="section section-alt">
+  <div class="shell split">
+    <div class="split-copy">
+      <p class="kicker">GitHub without the clipboard</p>
+      <h2 class="section-title">One token, exchanged server-side.</h2>
+      <p class="section-lede">
+        The app signs in with Clerk and asks this service for the GitHub token
+        you already connected. The Clerk secret never ships in the APK, and the
+        token is used only by the on-device git client.
+      </p>
+      <ul class="check-list">
+        <li><span class="tick" aria-hidden="true">✓</span> Clerk session verified as a bearer token</li>
+        <li><span class="tick" aria-hidden="true">✓</span> GitHub token returned once, never logged</li>
+        <li><span class="tick" aria-hidden="true">✓</span> Expired tokens rejected with a clear error</li>
+        <li><span class="tick" aria-hidden="true">✓</span> The Android Keystore holds what the app needs</li>
+      </ul>
+      <a class="text-link" href="/docs/github-bridge">Read the bridge guide <span aria-hidden="true">→</span></a>
+    </div>
+    <div class="split-visual">
+      <div class="callout">
+        <span class="callout-mark" aria-hidden="true">→</span>
+        <div>
+          <p class="callout-title">GET /api/v1/github/token</p>
+          <p>
+            The API maps a missing connection to
+            <span class="mono">github_not_connected</span>, an in-progress
+            refresh to <span class="mono">token_refresh_in_progress</span> with
+            <span class="mono">Retry-After</span>, and an upstream failure to a
+            generic 502.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="waitlist-section" id="waitlist">
+  <div class="shell waitlist waitlist-compact">
+    <div class="waitlist-copy">
+      <p class="kicker">Early access</p>
+      <h2 class="section-title">Bring a repository.</h2>
+      <p class="section-lede">Leave an email and we will send one note when the signed preview is ready.</p>
+    </div>
+    <div class="waitlist-action">
+      <%- include('partials/waitlist') %>
+    </div>
+  </div>
+</section>

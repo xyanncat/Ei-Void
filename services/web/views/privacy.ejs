@@ -1,0 +1,116 @@
+<section class="page-hero page-hero-compact">
+  <div class="shell">
+    <p class="eyebrow"><span class="status-dot" aria-hidden="true"></span> Privacy</p>
+    <h1>What stays<br><em>where.</em></h1>
+    <p class="page-lede">
+      The short version: reminder data lives on your phone first, the coding
+      workspace and its keys stay on the phone, and this website stores only the
+      account, snapshot and identity rows needed for the dashboard and bot.
+    </p>
+    <p class="page-meta">Last updated 21 November 2026 · developer preview</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="shell prose">
+    <h2>The Android app</h2>
+    <p>
+      Ei Void stores reminders, repositories, chats, settings and usage counters
+      in the app's private storage on your phone. Provider keys and the GitHub
+      token are encrypted with the Android Keystore. Ei Void does not run an
+      analytics SDK and does not send telemetry to us.
+    </p>
+    <p>
+      When you ask the agent to work, the context it needs is sent to the AI
+      provider you configured. Git operations go to GitHub. Sign-in and the
+      GitHub connection are handled by Clerk. Those services have their own
+      privacy terms; Ei Void does not proxy their traffic.
+    </p>
+
+    <h2>Reminders</h2>
+    <p>
+      A reminder is scheduled on the phone. When you sync, the app sends a
+      snapshot to this website: title, merchant, bank, amount, currency, due and
+      notification timestamps, repeat rule, category, notes, paid and active
+      flags, plus your timezone and notification hour. The website uses that
+      snapshot to answer <span class="mono">/usage</span>-style bot queries and to
+      show the dashboard. It is not a bank feed and has no credentials.
+    </p>
+
+    <h2>The coding agent</h2>
+    <p>
+      Repository contents, prompts and provider keys do not reach this website.
+      The one credential the website relays is the GitHub OAuth token you already
+      connected through Clerk: the app asks this service for it with a Clerk
+      session, and the service asks Clerk's Backend API. The token is returned to
+      the authenticated app and is not logged or stored by the website.
+    </p>
+
+    <h2>This website</h2>
+    <p>
+      The site uses first-party cookies: a signed form-integrity cookie
+      (<span class="mono">eivoid_form</span>, up to 30 days) and a CSRF cookie
+      (<span class="mono">eivoid_csrf</span>, up to 1 hour). They are HttpOnly and
+      SameSite=Lax, and Secure in production. Clerk also sets the cookies its
+      own sign-in widget needs. There is no advertising or analytics cookie.
+    </p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Data</th><th>Why</th><th>Where</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Clerk user id and email</td><td>Identify the account</td><td>Postgres account row</td></tr>
+          <tr><td>Reminder snapshot</td><td>Bot answers and dashboard summary</td><td>Postgres reminders</td></tr>
+          <tr><td>Discord id and username</td><td>Link the companion account</td><td>Postgres account row</td></tr>
+          <tr><td>Plan and usage counters</td><td>Show the dashboard and bot usage</td><td>Postgres snapshots</td></tr>
+          <tr><td>Device key digest</td><td>Authenticate usage uploads</td><td>Postgres, SHA-256 only</td></tr>
+          <tr><td>Waitlist email</td><td>One note when the preview is ready</td><td>Postgres waitlist</td></tr>
+          <tr><td>Link codes</td><td>Single-use Discord confirmation</td><td>Postgres, expire in 10 minutes</td></tr>
+          <tr><td>Request logs</td><td>Operate and secure the host</td><td>Render's platform logs</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      The site is hosted on Render and uses a Render Postgres database. Render
+      processes ordinary request metadata such as IP addresses and user agents
+      as part of operating the service. Secrets — the Clerk secret key, mail
+      credentials, the database URL and the Discord bot token — stay in the
+      server environment and are never rendered or sent to a browser.
+    </p>
+
+    <h2>Discord</h2>
+    <p>
+      When you run <span class="mono">/link</span>, the bot receives your Discord
+      user id and username. The link code is single-use and expires after ten
+      minutes. Bot replies are ephemeral. The bot does not request the Message
+      Content intent and does not read your messages.
+    </p>
+
+    <h2>Deleting data</h2>
+    <p>
+      The dashboard has a <strong>Delete website data</strong> button. It removes
+      the account row and, by cascade, the reminder snapshot, usage snapshots,
+      device keys and Discord link. Signing out clears the website cookies. App
+      data is removed by clearing the app's storage or uninstalling it.
+    </p>
+
+    <h2>Children and changes</h2>
+    <p>
+      Ei Void is a developer tool and is not directed at children. If the preview
+      changes its data practices, this page will be updated before the change
+      takes effect.
+    </p>
+
+    <h2>Contact</h2>
+    <p>
+      <% if (site.contactEmail) { %>
+        Email <a class="text-link" href="mailto:<%= site.contactEmail %>"><%= site.contactEmail %></a>
+        or open an issue in the
+      <% } else { %>
+        Open an issue in the
+      <% } %>
+      <a class="text-link" href="<%= site.repoUrl %>" target="_blank" rel="noreferrer">Ei Void repository</a>.
+    </p>
+  </div>
+</section>

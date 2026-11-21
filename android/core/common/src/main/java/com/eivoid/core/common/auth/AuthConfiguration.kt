@@ -4,8 +4,8 @@ import java.util.Base64
 
 /**
  * Clerk is the only sign-in. The publishable key is public; the Clerk secret
- * key lives only in the auth gateway, which also returns the GitHub token the
- * app needs for clone/push.
+ * key lives only in the Ei Void web service, which also returns the GitHub
+ * token the app needs for clone/push.
  */
 data class AuthConfiguration(
     val clerkPublishableKey: String = "",

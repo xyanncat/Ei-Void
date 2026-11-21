@@ -1,0 +1,145 @@
+<section class="page-hero">
+  <div class="hero-stars" aria-hidden="true"></div>
+  <div class="shell download-hero">
+    <div>
+      <p class="eyebrow"><span class="status-dot" aria-hidden="true"></span> Android 13+ · arm64 · v<%= version %></p>
+      <h1>Take the void<br><em>with you.</em></h1>
+      <p class="page-lede">
+        The Android app is the repository, the chat, the tool loop and the cat.
+        The signed preview is small; the build is honest about what is not
+        hosted yet.
+      </p>
+      <div class="page-actions">
+        <% if (site.downloadUrl) { %>
+          <a class="btn btn-primary" href="<%= site.downloadUrl %>">Download v<%= version %> APK</a>
+          <a class="btn btn-ghost" href="<%= site.releasesUrl %>" target="_blank" rel="noreferrer">Release notes <span class="arrow" aria-hidden="true">→</span></a>
+        <% } else { %>
+          <a class="btn btn-primary" href="/docs/getting-started">Build from source</a>
+          <a class="btn btn-ghost" href="<%= site.releasesUrl %>" target="_blank" rel="noreferrer">GitHub releases <span class="arrow" aria-hidden="true">→</span></a>
+        <% } %>
+      </div>
+      <p class="small-note">
+        <% if (site.downloadUrl) { %>
+          Signed with the project release key · SHA-256 on the release page
+        <% } else { %>
+          The signed v<%= version %> APK is not on this site yet. Build it from
+          the <span class="mono">feat/clerk-auth</span> branch.
+        <% } %>
+      </p>
+    </div>
+    <div class="download-card">
+      <div class="download-card-head">
+        <span class="download-cat" aria-hidden="true"><img src="/brand/icon-192.png" width="56" height="56" alt=""></span>
+        <div>
+          <p class="mono">EI VOID FOR ANDROID</p>
+          <p class="download-version">v<%= version %></p>
+        </div>
+        <span class="chip">Developer preview</span>
+      </div>
+      <dl class="download-facts">
+        <div><dt>Minimum</dt><dd>Android 13 (API 33)</dd></div>
+        <div><dt>ABI</dt><dd>arm64-v8a</dd></div>
+        <div><dt>Signing</dt><dd>Project release key</dd></div>
+        <div><dt>Size</dt><dd>~8 MB</dd></div>
+      </dl>
+      <a class="btn btn-ghost download-card-link" href="<%= site.repoUrl %>" target="_blank" rel="noreferrer">Read the source</a>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="shell">
+    <div class="callout callout-warn">
+      <span class="callout-mark" aria-hidden="true">△</span>
+      <div>
+        <p class="callout-title">Read this before you install.</p>
+        <p>
+          This is a developer preview, not a finished product. The Clerk-to-
+          GitHub bridge is not deployed, so the app can sign in but cannot
+          complete clone and push until you deploy <span class="mono">server/</span>
+          and set <span class="mono">void.backendUrl</span>. No AI provider key is
+          bundled. The Discord bot's usage sync is still a contract.
+        </p>
+      </div>
+    </div>
+
+    <div class="section-head">
+      <p class="kicker">The build</p>
+      <h2 class="section-title">From source in three lines.</h2>
+      <p class="section-lede">
+        You need JDK 21 and the Android SDK with platform 37. The app itself
+        needs a Clerk publishable key in <span class="mono">local.properties</span>.
+      </p>
+    </div>
+    <div class="terminal download-terminal">
+      <div class="terminal-bar">
+        <span class="terminal-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span class="terminal-title">build the preview</span>
+      </div>
+      <pre class="terminal-code"><code><span class="prompt">$</span> git clone <%= site.repoUrl %>.git
+<span class="prompt">$</span> cd <%= site.repoUrl.split('/').pop() %>
+<span class="prompt">$</span> ./gradlew :app:assembleDebug
+<span class="prompt">$</span> adb install app/build/outputs/apk/debug/app-debug.apk</code></pre>
+    </div>
+    <p class="download-build-note">
+      Starting from the app's first screen? <a class="text-link" href="/docs/getting-started">Follow Getting started <span aria-hidden="true">→</span></a>
+    </p>
+  </div>
+</section>
+
+<section class="section section-alt">
+  <div class="shell split">
+    <div class="split-copy">
+      <p class="kicker">What is new</p>
+      <h2 class="section-title"><%= changelog[0].title %>.</h2>
+      <p class="section-lede">
+        v<%= changelog[0].version %> · <%= changelog[0].date %>
+      </p>
+      <ul class="check-list">
+        <% changelog[0].items.forEach(function (item) { %>
+          <li><span class="tick" aria-hidden="true">✓</span><%= item %></li>
+        <% }); %>
+      </ul>
+      <a class="text-link" href="/changelog">The whole changelog <span aria-hidden="true">→</span></a>
+    </div>
+    <div class="split-visual">
+      <div class="phone-frame phone-frame-small">
+        <div class="phone-speaker" aria-hidden="true"></div>
+        <div class="phone-screen">
+          <img
+            src="/screens/auth.webp"
+            width="720"
+            height="1600"
+            alt="Ei Void's native Clerk sign-in screen with Discord, GitHub and Google provider buttons."
+          >
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="shell">
+    <div class="section-head">
+      <p class="kicker">Also read</p>
+      <h2 class="section-title">The map before the install.</h2>
+    </div>
+    <div class="download-links">
+      <a class="download-link-card" href="/docs/getting-started">
+        <p class="doc-kicker">Guide</p>
+        <h3>Getting started</h3>
+        <p>Keys, Clerk, the bridge and the first repository.</p>
+      </a>
+      <a class="download-link-card" href="/security">
+        <p class="doc-kicker">Model</p>
+        <h3>Security</h3>
+        <p>Where keys live and what the app refuses to touch.</p>
+      </a>
+      <a class="download-link-card" href="/docs/self-hosting">
+        <p class="doc-kicker">Run it</p>
+        <h3>Self-hosting</h3>
+        <p>The website and the bot on Render, with a database.</p>
+      </a>
+    </div>
+  </div>
+</section>

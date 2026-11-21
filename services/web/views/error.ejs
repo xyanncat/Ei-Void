@@ -1,0 +1,21 @@
+<section class="error-shell">
+  <div class="shell error-card">
+    <div class="error-cat" aria-hidden="true">
+      <img src="/brand/icon-192.png" width="112" height="112" alt="">
+    </div>
+    <p class="error-code mono"><%= status %></p>
+    <h1><%= status === 404 ? 'Not in this orbit.' : 'The void blinked.' %></h1>
+    <p class="page-lede"><%= message %></p>
+    <div class="page-actions center-actions">
+      <a class="btn btn-primary" href="/">Back to the void</a>
+      <% if (locals.linkHint) { %>
+        <a class="btn btn-ghost" href="/bot">Run /link in Discord <span class="arrow" aria-hidden="true">→</span></a>
+      <% } else { %>
+        <a class="btn btn-ghost" href="/docs">Read the docs <span class="arrow" aria-hidden="true">→</span></a>
+      <% } %>
+    </div>
+    <p class="error-note">
+      <% if (locals.linkHint) { %>Open Discord, run <span class="mono">/link</span>, and use the fresh URL.<% } else { %>If this keeps happening, open an issue on GitHub.<% } %>
+    </p>
+  </div>
+</section>

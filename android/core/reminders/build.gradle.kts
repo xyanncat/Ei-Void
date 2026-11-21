@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
@@ -7,11 +9,17 @@ plugins {
 }
 
 // The hosted reminder backend. It is configuration, never a secret, so it can
-// come from a Gradle property or the environment. An empty value turns sync
-// into a no-op failure without affecting local reminders.
-val eiVoidApiUrl: String = providers.gradleProperty("EI_VOID_API_URL")
-    .orElse(providers.environmentVariable("EI_VOID_API_URL"))
-    .getOrElse("")
+// come from local.properties, a Gradle property or the environment. An empty
+// value turns sync into a no-op failure without affecting local reminders.
+val localProperties = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) file.inputStream().use { load(it) }
+}
+val eiVoidApiUrl: String =
+    localProperties.getProperty("ei-void.apiUrl")
+        ?: providers.gradleProperty("EI_VOID_API_URL").orNull
+        ?: providers.environmentVariable("EI_VOID_API_URL").orNull
+        ?: ""
 
 android {
     namespace = "com.eivoid.core.reminders"

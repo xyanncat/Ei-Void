@@ -1,0 +1,55 @@
+<footer class="site-footer">
+  <div class="shell footer-grid">
+    <div class="footer-brand">
+      <a class="brand" href="/" aria-label="<%= site.name %> home">
+        <img class="brand-mark" src="/brand/icon-192.png" alt="" width="34" height="34">
+        <span class="brand-word">EI VOID</span>
+      </a>
+      <p class="footer-lede">Reminders and a coding agent in one app. Built in the open, with a cat on watch.</p>
+      <p class="footer-status">
+        <span class="status-dot" aria-hidden="true"></span>
+        Developer preview · v<%= site.version %>
+      </p>
+    </div>
+
+    <nav class="footer-col" aria-label="Product">
+      <p class="footer-heading">Product</p>
+      <a href="/reminders">Reminders</a>
+      <a href="/agent">Coding agent</a>
+      <a href="/features">Features</a>
+      <a href="/pricing">Plans</a>
+      <a href="/download">Download</a>
+      <a href="/changelog">Changelog</a>
+    </nav>
+
+    <nav class="footer-col" aria-label="Build">
+      <p class="footer-heading">Build</p>
+      <a href="/docs">Documentation</a>
+      <a href="/docs/getting-started">Getting started</a>
+      <a href="/docs/self-hosting">Self-hosting</a>
+      <a href="/docs/api">API</a>
+      <a href="/security">Security</a>
+    </nav>
+
+    <nav class="footer-col" aria-label="Companion">
+      <p class="footer-heading">Companion</p>
+      <a href="/bot">Discord bot</a>
+      <a href="/dashboard">Dashboard</a>
+      <a href="/sign-in">Sign in</a>
+      <a href="/docs/discord-bot">Bot setup</a>
+      <a href="<%= site.repoUrl %>" target="_blank" rel="noreferrer">GitHub</a>
+      <a href="<%= site.releasesUrl %>" target="_blank" rel="noreferrer">Releases</a>
+    </nav>
+  </div>
+
+  <div class="shell footer-bottom">
+    <p>© <%= year %> <%= site.name %>. The cat is Gatete.</p>
+    <p class="footer-legal">
+      <a href="/privacy">Privacy</a>
+      <span aria-hidden="true">·</span>
+      <a href="/terms">Terms</a>
+      <span aria-hidden="true">·</span>
+      <span>Android 13+ · arm64</span>
+    </p>
+  </div>
+</footer>

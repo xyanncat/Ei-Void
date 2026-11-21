@@ -16,9 +16,13 @@ import com.eivoid.core.database.VoidDatabase
 import com.eivoid.core.git.CloneManager
 import com.eivoid.core.git.GitClient
 import com.eivoid.core.git.RepoLocks
+import com.eivoid.core.reminders.AlarmScheduler
+import com.eivoid.core.reminders.NotificationHelper
 import com.eivoid.core.security.EncryptedSecretStore
 import com.eivoid.core.security.SecretStore
 import com.eivoid.core.workspace.WorkspaceManager
+import com.eivoid.feature.reminders.AndroidReminderPermissionSource
+import com.eivoid.feature.reminders.ReminderPermissionSource
 import com.eivoid.feature.settings.DataStoreSettingsStore
 import com.eivoid.feature.settings.SessionCleaner
 import com.eivoid.feature.settings.SettingsStore
@@ -59,7 +63,7 @@ object AppModule {
     @Singleton
     fun provideAuthConfiguration(): AuthConfiguration = AuthConfiguration(
         clerkPublishableKey = BuildConfig.CLERK_PUBLISHABLE_KEY,
-        backendUrl = BuildConfig.VOID_BACKEND_URL,
+        backendUrl = BuildConfig.EI_VOID_API_URL,
         accountPortalUrl = BuildConfig.CLERK_ACCOUNT_PORTAL_URL,
     )
 
@@ -72,7 +76,9 @@ object AppModule {
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): VoidDatabase =
         Room.databaseBuilder(context, VoidDatabase::class.java, "void.db")
-            .addMigrations(VoidDatabase.MIGRATION_1_2, VoidDatabase.MIGRATION_2_3)
+            // The reminder feature moved the schema to version 4; pass every
+            // migration in order so existing installs upgrade cleanly.
+            .addMigrations(*VoidDatabase.ALL_MIGRATIONS)
             .build()
 
     @Provides
@@ -120,6 +126,25 @@ object AppModule {
         @ApplicationContext context: Context,
         scope: CoroutineScope,
     ): SettingsStore = DataStoreSettingsStore(settingsDataStore(context), scope)
+
+    /**
+     * :core:reminders already provides ReminderRepository, AlarmScheduler,
+     * NotificationHelper and ReminderSettingsStore through its own Hilt module,
+     * which is aggregated into this component. Re-declaring them here would be
+     * a duplicate binding, so the app layer only supplies the platform
+     * permission reader the reminder ViewModels inject.
+     */
+    @Provides
+    @Singleton
+    fun provideReminderPermissionSource(
+        @ApplicationContext context: Context,
+        notificationHelper: NotificationHelper,
+        scheduler: AlarmScheduler,
+    ): ReminderPermissionSource = AndroidReminderPermissionSource(
+        context = context,
+        notificationHelper = notificationHelper,
+        scheduler = scheduler,
+    )
 
     @Provides
     @Singleton

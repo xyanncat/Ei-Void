@@ -1,0 +1,9 @@
+<nav class="docs-nav" aria-label="Documentation">
+  <a class="docs-nav-home <%= doc ? '' : 'is-active' %>" href="/docs">All docs</a>
+  <% docs.forEach(function (entry) { %>
+    <a
+      class="docs-nav-link <%= doc && doc.slug === entry.slug ? 'is-active' : '' %>"
+      href="/docs/<%= entry.slug %>"
+    ><%= entry.title %></a>
+  <% }); %>
+</nav>

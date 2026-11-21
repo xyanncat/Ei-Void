@@ -29,6 +29,7 @@ dependencies {
     implementation(project(":core:database"))
     implementation(project(":core:security"))
     implementation(project(":core:workspace"))
+    implementation(project(":core:reminders"))
     implementation(project(":designsystem"))
 
     implementation(libs.androidx.core.ktx)

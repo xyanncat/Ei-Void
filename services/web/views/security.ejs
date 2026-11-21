@@ -1,0 +1,58 @@
+<section class="page-hero">
+  <div class="hero-stars" aria-hidden="true"></div>
+  <div class="shell">
+    <p class="eyebrow"><span class="status-dot" aria-hidden="true"></span> Security model</p>
+    <h1>The quiet<br><em>part.</em></h1>
+    <p class="page-lede">
+      A coding agent is a trusted tool with sharp edges. Ei Void keeps the keys on
+      the phone, the tools inside the workspace, and the bot token out of the
+      browser.
+    </p>
+    <div class="page-actions">
+      <a class="btn btn-primary" href="<%= site.repoUrl %>/security/advisories/new" target="_blank" rel="noreferrer">Report a vulnerability</a>
+      <a class="btn btn-ghost" href="/docs/security">Read the docs <span class="arrow" aria-hidden="true">→</span></a>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="shell security-layout">
+    <div class="security-principles">
+      <div class="principle">
+        <p class="mono">01 / keys</p>
+        <h3>Hardware-backed</h3>
+        <p>Provider keys and the GitHub token are encrypted through the Android Keystore, not a plain preference.</p>
+      </div>
+      <div class="principle">
+        <p class="mono">02 / tools</p>
+        <h3>Bounded workspace</h3>
+        <p>File and git tools resolve paths against the workspace root and refuse escapes, including through <span class="mono">.git</span>.</p>
+      </div>
+      <div class="principle">
+        <p class="mono">03 / actions</p>
+        <h3>Confirm the sharp bits</h3>
+        <p>Delete and push are not autonomous. The agent asks; a tap is the boundary.</p>
+      </div>
+      <div class="principle">
+        <p class="mono">04 / server</p>
+        <h3>No repo in the middle</h3>
+        <p>The website stores Discord identity, plan counters and waitlist emails. It never receives repository content or provider keys.</p>
+      </div>
+    </div>
+    <article class="doc-body security-doc">
+      <% if (html) { %>
+        <%- html %>
+      <% } else { %>
+        <p>The security document is not available in this build.</p>
+      <% } %>
+      <div class="callout callout-quiet">
+        <span class="callout-mark" aria-hidden="true">→</span>
+        <p>
+          Found something? Use
+          <a class="text-link" href="<%= site.repoUrl %>/security/advisories/new" target="_blank" rel="noreferrer">GitHub Security Advisories</a>
+          rather than a public issue. The preview has no bug bounty.
+        </p>
+      </div>
+    </article>
+  </div>
+</section>

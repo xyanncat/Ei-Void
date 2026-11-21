@@ -1,0 +1,17 @@
+<article class="plan <%= plan.featured ? 'plan-featured' : '' %>">
+  <div class="plan-head">
+    <div>
+      <h3 class="plan-name"><%= plan.name %></h3>
+      <p class="plan-cadence"><%= plan.cadence %></p>
+    </div>
+    <% if (plan.featured) { %><span class="plan-badge">Recommended</span><% } %>
+  </div>
+  <p class="plan-price"><%= plan.price %></p>
+  <p class="plan-tagline"><%= plan.tagline %></p>
+  <ul class="plan-features">
+    <% plan.features.forEach(function (feature) { %>
+      <li><span class="tick" aria-hidden="true">✓</span><%= feature %></li>
+    <% }); %>
+  </ul>
+  <a class="btn <%= plan.featured ? 'btn-primary' : 'btn-ghost' %> plan-cta" href="#waitlist">Join the preview</a>
+</article>

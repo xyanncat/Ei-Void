@@ -1,0 +1,13 @@
+<div class="tier-grid">
+  <% tiers.forEach(function (tier, index) { %>
+    <article class="tier-card">
+      <div class="tier-top">
+        <span class="tier-dot tier-dot-<%= index %>" aria-hidden="true"></span>
+        <span class="tier-label"><%= tier.label %></span>
+      </div>
+      <h3><%= tier.name %></h3>
+      <p><%= tier.body %></p>
+      <p class="tier-mult"><strong><%= tier.multiplier %></strong> relative token weight</p>
+    </article>
+  <% }); %>
+</div>
