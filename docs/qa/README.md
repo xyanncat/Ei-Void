@@ -4,8 +4,23 @@
 
 | Device | API | Status |
 |---|---|---|
-| Android emulator `void35` | 35 | Base shell installed; reminder build pending |
-| Redmi 10 Prime | 33+ | USB ADB interface detected; waiting for USB-debugging authorization |
+| Android emulator `void35` | 35 | Final merged APK installed and walked through |
+| Redmi 10 Prime (`005302500508`) | 33 | ADB authorized, but MIUI returns `INSTALL_FAILED_USER_RESTRICTED` until **Developer options → Install via USB** is enabled |
+
+Verified on the emulator on 2026-11-21:
+
+- Home opens first with the four-tab shell (Home, Reminders, Code, Settings).
+- Added “Internet / ISP / ₹500”; the row persisted in Room and rendered on Home.
+- The exact alarm fired and posted the `reminders` channel notification with
+  Mark paid and Snooze actions.
+- Mark paid moved the row to Paid and stopped its alarm.
+- Snooze moved the due date forward one day and reset the notified marker.
+- Settings shows the reminder notification, email and permission sections with
+  Ei Void branding.
+- No fatal exception in logcat; the process stayed alive.
+
+Evidence screenshots: `eivoid-home-final.png`, `eivoid-reminders.png`,
+`eivoid-notif-expanded.png`, `eivoid-settings-final.png`.
 
 ## Reminder checks
 
