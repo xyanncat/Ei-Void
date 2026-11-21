@@ -39,6 +39,7 @@ Verified on the Redmi 10 Prime on 2026-11-22:
 - The exact alarm fired (`com.eivoid.core.reminders.action.REMINDER`).
 - The notification posted on the `reminders` channel with **MARK PAID** and
   **SNOOZE 1 DAY**.
+- In-app **Paid** moved the reminder to the Paid section (0 upcoming · 1 paid).
 - No crash; the process stayed alive.
 
 Evidence screenshots: `redmi-home.png`, `redmi-reminders.png`,
