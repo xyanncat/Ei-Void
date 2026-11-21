@@ -99,7 +99,7 @@ describe('migrations', () => {
 
   it('generates and hashes device keys', () => {
     const key = generateDeviceKey();
-    expect(key).toMatch(/^void_[A-Za-z0-9_-]+$/);
+    expect(key).toMatch(/^eivoid_[A-Za-z0-9_-]+$/);
     expect(key.length).toBeGreaterThan(20);
     expect(hashDeviceKey(key)).toMatch(/^[a-f0-9]{64}$/);
     expect(hashDeviceKey(key)).toBe(hashDeviceKey(key));
@@ -333,13 +333,14 @@ describeWithDatabase('Store (PostgreSQL integration)', () => {
 
   it('issues, tracks and revokes device keys', async () => {
     const issued = await store.issueDeviceKey(clerkUserId);
-    expect(issued.key).toMatch(/^void_/);
+    expect(issued.key).toMatch(/^eivoid_/);
     expect(issued.keyHash).toBe(hashDeviceKey(issued.key));
     expect(issued.revokedAt).toBeNull();
 
     const found = await store.findDeviceKey(issued.keyHash);
     expect(found).toMatchObject({ id: issued.id, clerkUserId });
     expect(found?.lastSeenAt).toBeInstanceOf(Date);
+    expect((await store.findDeviceKey(issued.key))?.id).toBe(issued.id);
 
     expect(await store.revokeDeviceKey(issued.id)).toBe(true);
     expect(await store.findDeviceKey(issued.keyHash)).toBeNull();

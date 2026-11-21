@@ -13,6 +13,7 @@ import type {
   LinkCode,
   ReminderInput,
   ReminderRecord,
+  ReminderSummary,
   SnoozeReminderOptions,
   UpsertAccountInput,
   UsageSnapshotRecord,
@@ -650,9 +651,13 @@ export class Store {
     return { ...mapDeviceKey(row), key };
   }
 
-  /** Looks up an active key by its SHA-256 digest and records last-seen time. */
-  async findDeviceKey(keyHash: string): Promise<DeviceKeyRecord | null> {
-    if (!keyHash) return null;
+  /**
+   * Looks up an active key and records last-seen time. Accepts either the raw
+   * bearer key or its SHA-256 digest.
+   */
+  async findDeviceKey(keyOrHash: string): Promise<DeviceKeyRecord | null> {
+    if (!keyOrHash) return null;
+    const keyHash = normaliseDeviceKey(keyOrHash);
     const result = await this.pool.query<DeviceKeyRow>(
       `UPDATE device_keys
        SET last_seen_at = now()
@@ -664,24 +669,89 @@ export class Store {
     return row ? mapDeviceKey(row) : null;
   }
 
-  async revokeDeviceKey(idOrHash: number | string): Promise<boolean> {
+  /** Revokes by database id, raw device key or key digest. */
+  async revokeDeviceKey(idOrKey: number | string): Promise<boolean> {
     const result =
-      typeof idOrHash === 'number'
+      typeof idOrKey === 'number'
         ? await this.pool.query(
             `UPDATE device_keys
              SET revoked_at = COALESCE(revoked_at, now())
              WHERE id = $1
              RETURNING id`,
-            [idOrHash],
+            [idOrKey],
           )
         : await this.pool.query(
             `UPDATE device_keys
              SET revoked_at = COALESCE(revoked_at, now())
              WHERE key_hash = $1
              RETURNING id`,
-            [idOrHash],
+            [normaliseDeviceKey(idOrKey)],
           );
     return (result.rowCount ?? 0) > 0;
+  }
+
+  /**
+   * Revokes a device key only when it belongs to the given account, so the
+   * dashboard cannot revoke another user's key by guessing an id.
+   */
+  async revokeDeviceKeyForUser(id: number, clerkUserId: string): Promise<boolean> {
+    if (!Number.isSafeInteger(id) || id <= 0) return false;
+    const result = await this.pool.query(
+      `UPDATE device_keys
+       SET revoked_at = COALESCE(revoked_at, now())
+       WHERE id = $1 AND clerk_user_id = $2
+       RETURNING id`,
+      [id, clerkUserId],
+    );
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  /** Device keys belonging to an account, newest first. Hashes are included. */
+  async listDeviceKeys(clerkUserId: string): Promise<DeviceKeyRecord[]> {
+    const result = await this.pool.query<DeviceKeyRow>(
+      `SELECT *
+       FROM device_keys
+       WHERE clerk_user_id = $1
+       ORDER BY created_at DESC, id DESC
+       LIMIT 50`,
+      [clerkUserId],
+    );
+    return result.rows.map(mapDeviceKey);
+  }
+
+  /** Aggregate reminder counts for the dashboard without loading every row. */
+  async reminderSummary(clerkUserId: string): Promise<ReminderSummary> {
+    const result = await this.pool.query<{
+      total: string | number;
+      active: string | number;
+      paid: string | number;
+      next_due_at: string | number | null;
+    }>(
+      `SELECT count(*) AS total,
+              count(*) FILTER (WHERE is_active AND NOT is_paid) AS active,
+              count(*) FILTER (WHERE is_paid) AS paid,
+              min(due_at) FILTER (WHERE is_active AND NOT is_paid) AS next_due_at
+       FROM reminders
+       WHERE clerk_user_id = $1`,
+      [clerkUserId],
+    );
+    const row = result.rows[0];
+    return {
+      total: toNumber(row?.total),
+      active: toNumber(row?.active),
+      paid: toNumber(row?.paid),
+      nextDueAt: row?.next_due_at == null ? null : toNumber(row.next_due_at),
+    };
+  }
+
+  /** Lightweight liveness probe for the public health endpoint. */
+  async ping(): Promise<boolean> {
+    try {
+      await this.pool.query('SELECT 1');
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   async addUsageSnapshot(input: AddUsageSnapshotInput): Promise<UsageSnapshotRecord> {
@@ -726,6 +796,10 @@ export class Store {
     );
     return (result.rowCount ?? 0) > 0;
   }
+}
+
+function normaliseDeviceKey(value: string): string {
+  return /^(?:eivoid|void)_/.test(value) ? hashDeviceKey(value) : value;
 }
 
 function optionalEpoch(value: number | undefined): number | null {

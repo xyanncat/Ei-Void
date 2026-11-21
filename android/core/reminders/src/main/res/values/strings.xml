@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="eivoid_reminder_channel_name">Payment reminders</string>
+    <string name="eivoid_reminder_channel_description">Alerts for upcoming and overdue payments</string>
+</resources>

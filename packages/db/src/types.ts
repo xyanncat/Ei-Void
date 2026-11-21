@@ -106,6 +106,15 @@ export interface DeviceKeyRecord {
   revokedAt: Date | null;
 }
 
+/** Aggregate reminder counts for the account dashboard. */
+export interface ReminderSummary {
+  total: number;
+  active: number;
+  paid: number;
+  /** Earliest upcoming, unpaid due timestamp in epoch milliseconds, or null. */
+  nextDueAt: number | null;
+}
+
 export interface IssuedDeviceKey extends DeviceKeyRecord {
   /** The raw key. It is returned once and never stored. */
   key: string;

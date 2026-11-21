@@ -9,6 +9,9 @@ export const REPEAT_RULES = [
 
 export type RepeatRule = (typeof REPEAT_RULES)[number];
 
+/** Set form for code ported from the Ei Snore backend. */
+export const REPEAT_RULE_SET: ReadonlySet<string> = new Set(REPEAT_RULES);
+
 export const CATEGORIES = [
   'BILL',
   'SUBSCRIPTION',
@@ -20,9 +23,13 @@ export const CATEGORIES = [
 
 export type Category = (typeof CATEGORIES)[number];
 
+export const CATEGORY_SET: ReadonlySet<string> = new Set(CATEGORIES);
+
 export const CURRENCIES = ['INR', 'USD'] as const;
 
 export type Currency = (typeof CURRENCIES)[number];
+
+export const CURRENCY_SET: ReadonlySet<string> = new Set(CURRENCIES);
 
 /** Token allowances for the three plans. Values are monthly token counts. */
 export const PLAN_LIMITS = Object.freeze({

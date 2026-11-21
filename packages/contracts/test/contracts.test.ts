@@ -7,6 +7,7 @@ import {
   REPEAT_RULES,
   accountResponseSchema,
   deviceKeyIssueRequestSchema,
+  discordLinkCodeRequestSchema,
   discordLinkRequestSchema,
   errorCodeSchema,
   errorResponseSchema,
@@ -15,7 +16,9 @@ import {
   reminderInputSchema,
   reminderProfileSchema,
   reminderSyncRequestSchema,
+  reminderSyncResponseSchema,
   usageSnapshotInputSchema,
+  usageSnapshotRecordSchema,
   usageSnapshotSchema,
 } from '../src/index.js';
 
@@ -255,6 +258,10 @@ describe('API response schemas', () => {
         discord: { id: 'not-a-snowflake', username: 'x' },
       }).success,
     ).toBe(false);
+
+    expect(
+      reminderSyncResponseSchema.parse({ ok: true, synced: 2, discordLinked: false }),
+    ).toEqual({ ok: true, synced: 2, discordLinked: false });
   });
 
   it('validates usage snapshot input and output', () => {
@@ -283,14 +290,24 @@ describe('API response schemas', () => {
     expect(
       usageSnapshotSchema.parse({
         id: 1,
-        clerkUserId: 'user_123',
         plan: 'Pro',
         tokensUsed: 1_000,
         tokensLimit: 80_000_000,
         periodEnd: null,
         createdAt: '2026-11-21T10:00:00.000Z',
       }),
-    ).toMatchObject({ id: 1, clerkUserId: 'user_123', periodEnd: null });
+    ).toMatchObject({ id: 1, periodEnd: null });
+    expect(
+      usageSnapshotRecordSchema.parse({
+        id: 1,
+        clerkUserId: 'user_123',
+        plan: 'Pro',
+        tokensUsed: 1_000,
+        tokensLimit: 80_000_000,
+        periodEnd: null,
+        createdAt: '2026-11-21T10:00:00.000Z',
+      }).clerkUserId,
+    ).toBe('user_123');
   });
 
   it('validates discord link and device key requests', () => {
@@ -298,6 +315,25 @@ describe('API response schemas', () => {
       discordLinkRequestSchema.parse({ accessToken: '  oauth-token  ' }).accessToken,
     ).toBe('oauth-token');
     expect(discordLinkRequestSchema.safeParse({}).success).toBe(false);
+
+    expect(
+      discordLinkCodeRequestSchema.parse({
+        discordUserId: '123456789012345678',
+        discordUsername: ' voidcat ',
+      }),
+    ).toEqual({ discordUserId: '123456789012345678', discordUsername: 'voidcat' });
+    expect(
+      discordLinkCodeRequestSchema.safeParse({
+        discordUserId: 'nope',
+        discordUsername: 'voidcat',
+      }).success,
+    ).toBe(false);
+    expect(
+      discordLinkCodeRequestSchema.safeParse({
+        discordUserId: '123456789012345678',
+        discordUsername: 'bad\u0007name',
+      }).success,
+    ).toBe(false);
 
     expect(deviceKeyIssueRequestSchema.parse({})).toEqual({});
     expect(deviceKeyIssueRequestSchema.parse({ label: ' Pixel ' })).toEqual({

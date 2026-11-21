@@ -356,7 +356,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   const mail: MailSettings = {
     from: mailFrom(optionalText(env, 'MAIL_FROM')),
     fromName: optionalText(env, 'MAIL_FROM_NAME') || 'Ei Void',
-
     gmail: {
       clientId: optionalText(env, 'GMAIL_CLIENT_ID'),
       clientSecret: optionalText(env, 'GMAIL_CLIENT_SECRET'),

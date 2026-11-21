@@ -1,7 +1,7 @@
 import {
-  CATEGORIES,
-  CURRENCIES,
-  REPEAT_RULES,
+  CATEGORY_SET,
+  CURRENCY_SET,
+  REPEAT_RULE_SET,
   type Category,
   type Currency,
   type RepeatRule,
@@ -44,15 +44,15 @@ function toText(value: unknown, fallback = '', maxLength = 500): string {
 }
 
 function isRepeatRule(value: string): value is RepeatRule {
-  return (REPEAT_RULES as readonly string[]).includes(value);
+  return REPEAT_RULE_SET.has(value);
 }
 
 function isCategory(value: string): value is Category {
-  return (CATEGORIES as readonly string[]).includes(value);
+  return CATEGORY_SET.has(value);
 }
 
 function isCurrency(value: string): value is Currency {
-  return (CURRENCIES as readonly string[]).includes(value);
+  return CURRENCY_SET.has(value);
 }
 
 /**

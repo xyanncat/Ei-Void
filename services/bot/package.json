@@ -1,0 +1,32 @@
+{
+  "name": "@eivoid/bot",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Ei Void Discord companion: account linking, reminders, usage and the reminder scheduler.",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "tsx src/index.ts",
+    "register": "tsx src/register.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@eivoid/config": "*",
+    "@eivoid/contracts": "*",
+    "@eivoid/db": "*",
+    "@eivoid/discord-core": "*",
+    "@eivoid/mailer": "*",
+    "discord.js": "^14.28.1",
+    "dotenv": "^16.4.7"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3",
+    "vitest": "^2.1.8"
+  }
+}

@@ -27,6 +27,7 @@ include(
     ":core:common",
     ":core:security",
     ":core:database",
+    ":core:reminders",
     ":core:git",
     ":core:workspace",
     ":core:ai",

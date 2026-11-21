@@ -68,7 +68,7 @@ function errorStatusOf(error: unknown): number | undefined {
 /** The minimum channel surface the reminder delivery code needs. */
 export interface DiscordChannel {
   readonly id: string;
-  readonly name?: string;
+  readonly name?: string | null;
   readonly guildId?: string | null;
   isTextBased?(): boolean;
   isThread?(): boolean;
@@ -123,7 +123,7 @@ export interface DiscordClient {
   };
   channels?: {
     cache: DiscordCollection<DiscordChannel>;
-    fetch?(channelId: string): Promise<DiscordChannel>;
+    fetch?(channelId: string): Promise<DiscordChannel | null>;
   };
 }
 
@@ -590,7 +590,8 @@ async function sendFallback(
   message: string,
   homeGuildId: string | undefined,
 ): Promise<DiscordReminderResult> {
-  let channel = client.channels?.cache.get(channelId);
+  let channel: DiscordChannel | null | undefined =
+    client.channels?.cache.get(channelId);
   if (!channel && typeof client.channels?.fetch === 'function') {
     try {
       channel = await client.channels.fetch(channelId);

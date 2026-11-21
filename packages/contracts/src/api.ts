@@ -116,23 +116,53 @@ export const reminderSyncRequestSchema = z
 export type ReminderSyncRequest = z.infer<typeof reminderSyncRequestSchema>;
 export type ReminderSyncRequestInput = z.input<typeof reminderSyncRequestSchema>;
 
+const discordUsernameSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(64)
+  .refine(
+    (value) => !/[\u0000-\u001f\u007f]/u.test(value),
+    'invalid_discord_username',
+  );
+
+export const discordUserIdSchema = z.string().regex(DISCORD_SNOWFLAKE, 'invalid_discord_id');
+
 export const accountDiscordSchema = z.object({
-  id: z.string().regex(DISCORD_SNOWFLAKE, 'invalid_discord_id'),
-  username: z.string().trim().min(1).max(64),
+  id: discordUserIdSchema,
+  username: discordUsernameSchema,
 });
 
 export type AccountDiscord = z.infer<typeof accountDiscordSchema>;
 
+const tokenCountSchema = z.number().int().nonnegative().max(NUMBER_MAX_SAFE);
+
 /** GET /account response. */
 export const accountResponseSchema = z.object({
+  clerkUserId: z.string().trim().min(1).max(128).optional(),
   email: z.string().max(254),
   displayName: z.string().max(120),
   discord: accountDiscordSchema.nullable(),
+  timezone: z.string().trim().max(80).optional(),
+  notifyHour: z.number().int().min(0).max(23).optional(),
+  notifyMinute: z.number().int().min(0).max(59).optional(),
+  emailEnabled: z.boolean().optional(),
+  plan: z.string().trim().min(1).max(64).optional(),
+  usage: z.lazy(() => usageSnapshotSchema.nullable()).optional(),
+  planLimit: tokenCountSchema.optional(),
 });
 
 export type AccountResponse = z.infer<typeof accountResponseSchema>;
 
-const tokenCountSchema = z.number().int().nonnegative().max(NUMBER_MAX_SAFE);
+/** POST /reminders/sync response. */
+
+export const reminderSyncResponseSchema = z.object({
+  ok: z.literal(true),
+  synced: z.number().int().nonnegative(),
+  discordLinked: z.boolean(),
+});
+
+export type ReminderSyncResponse = z.infer<typeof reminderSyncResponseSchema>;
 
 /** Body accepted when a device uploads its usage counters. */
 export const usageSnapshotInputSchema = z.object({
@@ -144,15 +174,19 @@ export const usageSnapshotInputSchema = z.object({
 
 export type UsageSnapshotInput = z.infer<typeof usageSnapshotInputSchema>;
 
-/** A stored usage snapshot, as returned by the API. */
+/** A usage snapshot as returned to an authenticated app or dashboard. */
 export const usageSnapshotSchema = z.object({
   id: z.number().int().positive(),
-  clerkUserId: z.string().trim().min(1).max(128),
   plan: z.string().trim().min(1).max(64),
   tokensUsed: tokenCountSchema,
   tokensLimit: tokenCountSchema,
   periodEnd: z.string().max(64).nullable(),
   createdAt: z.string().datetime({ offset: true }),
+});
+
+/** A usage snapshot including its owner, for internal/DB-shaped consumers. */
+export const usageSnapshotRecordSchema = usageSnapshotSchema.extend({
+  clerkUserId: z.string().trim().min(1).max(128),
 });
 
 export type UsageSnapshot = z.infer<typeof usageSnapshotSchema>;
@@ -163,6 +197,18 @@ export const discordLinkRequestSchema = z.object({
 });
 
 export type DiscordLinkRequest = z.infer<typeof discordLinkRequestSchema>;
+
+/**
+ * Bot-facing request that creates a one-time link URL for a Discord user.
+ * Kept separate from `discordLinkRequestSchema`: the bot supplies the Discord
+ * identity, while the browser supplies an OAuth access token.
+ */
+export const discordLinkCodeRequestSchema = z.object({
+  discordUserId: discordUserIdSchema,
+  discordUsername: discordUsernameSchema,
+});
+
+export type DiscordLinkCodeRequest = z.infer<typeof discordLinkCodeRequestSchema>;
 
 /**
  * Body for issuing a device key. The authenticated account is implied by the
