@@ -35,25 +35,25 @@ data class AssistantTask(
 val HOME_TASKS: List<AssistantTask> = listOf(
     AssistantTask(
         label = "Plan my day",
-        description = "Turn due dates and priorities into a plan.",
+        description = "Turn due dates into a plan.",
         prompt = "Help me plan my day around my reminders and priorities.",
         icon = AssistantTaskIcon.CALENDAR,
     ),
     AssistantTask(
         label = "Review bills",
-        description = "Renewals, subscriptions and due dates.",
+        description = "Renewals and due dates.",
         prompt = "Review my upcoming bills and subscriptions and flag anything that needs attention.",
         icon = AssistantTaskIcon.RECEIPT,
     ),
     AssistantTask(
         label = "Review code",
-        description = "Summarize a repository or review a change.",
+        description = "Repo and change reviews.",
         prompt = "Review the active project and call out bugs, risky changes and missing tests.",
         icon = AssistantTaskIcon.CODE,
     ),
     AssistantTask(
         label = "Draft a message",
-        description = "Write a clear email, reply or update.",
+        description = "A clear email or reply.",
         prompt = "Draft a concise, professional message for me.",
         icon = AssistantTaskIcon.EDIT,
     ),
