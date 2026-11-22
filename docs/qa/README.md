@@ -78,8 +78,8 @@ The assistant is no longer a debug shell with oversized copy and emoji chips.
 - **Inter typography.** Bundled Inter Regular/Medium/SemiBold/Bold gives the
   app one a product-owned type scale instead of OEM Roboto.
 - **Assistant home.** A branded header (menu, cat mark, wordmark, incognito),
-  a short greeting, four capability cards with vector icons and descriptions,
-  a workspace card, a privacy line and a floating composer.
+  a short greeting, four equal-height capability cards with vector icons and
+  descriptions, a workspace card, a privacy line and a floating composer.
 - **Drawer.** Brand header, account card (local workspace shows “On-device
   profile”), a primary New chat action, grouped Workspace/Preferences sections,
   selected-state treatment, and a scrollable short-viewport layout.
@@ -93,7 +93,7 @@ The assistant is no longer a debug shell with oversized copy and emoji chips.
 Verified on the emulator: portrait home, landscape home (four compact cards),
 drawer in both orientations including scrolling to Usage, composer typing and
 send, provider error state, and navigation to Library and Customize. Evidence:
-`redesign-home-2.png`, `redesign-drawer-1.png`, `redesign-chat-1.png`,
+`redesign-home-final.png`, `redesign-drawer-1.png`, `redesign-chat-1.png`,
 `redesign-final-home-landscape.png`, `redesign-drawer-landscape-2.png`.
 
 ## Installing on this Redmi

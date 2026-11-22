@@ -53,7 +53,7 @@ val HOME_TASKS: List<AssistantTask> = listOf(
     ),
     AssistantTask(
         label = "Draft a message",
-        description = "A clear email or reply.",
+        description = "Write a clear email or reply.",
         prompt = "Draft a concise, professional message for me.",
         icon = AssistantTaskIcon.EDIT,
     ),
