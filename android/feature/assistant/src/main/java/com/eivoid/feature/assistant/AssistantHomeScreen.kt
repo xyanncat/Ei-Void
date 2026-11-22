@@ -814,7 +814,7 @@ private fun AssistantInputBar(
                     ) {
                         Icon(
                             imageVector = Icons.Outlined.Add,
-                            contentDescription = "Add",
+                            contentDescription = null,
                             tint = VoidColors.oledTextSecondary,
                             modifier = Modifier.size(22.dp),
                         )
@@ -905,7 +905,7 @@ private fun AssistantInputBar(
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.Mic,
-                        contentDescription = "Dictate",
+                        contentDescription = null,
                         tint = VoidColors.oledTextSecondary,
                         modifier = Modifier.size(20.dp),
                     )
@@ -925,14 +925,14 @@ private fun AssistantInputBar(
                     if (hasInput) {
                         Icon(
                             imageVector = Icons.Outlined.ArrowUpward,
-                            contentDescription = "Send",
+                            contentDescription = null,
                             tint = Color.White,
                             modifier = Modifier.size(21.dp),
                         )
                     } else {
                         Icon(
                             imageVector = Icons.Outlined.GraphicEq,
-                            contentDescription = "Live voice",
+                            contentDescription = null,
                             tint = Color.White,
                             modifier = Modifier.size(21.dp),
                         )
