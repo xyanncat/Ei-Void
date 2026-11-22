@@ -5,7 +5,7 @@
 | Device | API | Status |
 |---|---|---|
 | Android emulator `void35` | 35 | Discord wiring build installed; assistant and Discord config path walked through |
-| Redmi 10 Prime (`005302500508`) | 33 | v0.2.0 release APK installed; landscape, Discord config path and restored reminders verified |
+| Redmi 10 Prime (`005302500508`) | 33 | v0.3.2 production UI preview installed; card layout, landscape and restored reminders verified |
 
 ## First UI pass (2026-11-22)
 
@@ -95,6 +95,15 @@ drawer in both orientations including scrolling to Usage, composer typing and
 send, provider error state, and navigation to Library and Customize. Evidence:
 `redesign-home-final.png`, `redesign-drawer-1.png`, `redesign-chat-1.png`,
 `redesign-final-home-landscape.png`, `redesign-drawer-landscape-2.png`.
+
+Verified on the Redmi 10 Prime with the published `v0.3.2` APK:
+
+- Play Protect scanned the APK as “This app looks safe”.
+- The home renders the branded header, four equal-height capability cards with
+  untruncated copy, the workspace card, privacy line and composer.
+- Library still shows 0 upcoming · 1 paid after the install, so the reminder
+  database and DataStore settings survived the backup/install/restore path.
+- Evidence: `redmi-v0.3.2-home.png`, `redmi-v0.3.2-library.png`.
 
 ## Installing on this Redmi
 
