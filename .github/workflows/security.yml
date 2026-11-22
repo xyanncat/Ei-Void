@@ -24,6 +24,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   codeql:
+    # SARIF upload needs GitHub Code Security, which is not available on a
+    # private repository without GitHub Advanced Security. Gitleaks still runs.
+    if: ${{ github.repository_visibility == 'public' }}
     runs-on: ubuntu-latest
     strategy:
       matrix:

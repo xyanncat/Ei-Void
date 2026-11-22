@@ -13,6 +13,9 @@ jobs:
     runs-on: ubuntu-latest
     env:
       HAS_SIGNING: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+      # Public configuration, set as repository variables. Never secrets.
+      DISCORD_CLIENT_ID: ${{ vars.DISCORD_CLIENT_ID }}
+      EI_VOID_API_URL: ${{ vars.EI_VOID_API_URL }}
     steps:
       - uses: actions/checkout@v4
 
@@ -71,3 +74,5 @@ jobs:
           files: dist/*.apk
           fail_on_unmatched_files: true
           generate_release_notes: true
+          # A debug preview is not a signed production release.
+          prerelease: ${{ env.HAS_SIGNING != 'true' }}

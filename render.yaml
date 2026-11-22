@@ -45,6 +45,8 @@ services:
       - key: DISCORD_APPLICATION_ID
         sync: false
       # Used only by POST /api/v1/test/discord. It never reaches a browser.
+      # The same Discord application must have the Public Client OAuth flag and
+      # the redirect URI https://<PUBLIC_BASE_URL>/discord-callback.
       - key: DISCORD_BOT_TOKEN
         sync: false
       - key: DISCORD_GUILD_ID

@@ -19,19 +19,36 @@ import java.io.File
 import java.nio.file.Files
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class SettingsViewModelTest {
+
+    @Before
+    fun setUp() {
+        Dispatchers.setMain(UnconfinedTestDispatcher())
+    }
+
+    @After
+    fun tearDown() {
+        Dispatchers.resetMain()
+    }
 
     @Test
     fun `save and load a provider key`() = runTest {
@@ -120,9 +137,98 @@ class SettingsViewModelTest {
         assertFalse(File(workspaces, "owner/repo").exists())
     }
 
+    @Test
+    fun `connecting discord shows the linked username`() = runTest {
+        val service = FakeDiscordLinkService(
+            linkResult = Result.success(DiscordIdentity(id = "42", username = "cat")),
+        )
+        val vm = viewModel(discord = service)
+
+        vm.connectDiscord("one-time-token")
+
+        assertEquals("one-time-token", service.lastAccessToken)
+        assertTrue(vm.discord.value.linked)
+        assertEquals("cat", vm.discord.value.username)
+        assertFalse(vm.discord.value.busy)
+    }
+
+    @Test
+    fun `connecting reports a guild membership failure`() = runTest {
+        val service = FakeDiscordLinkService(
+            linkResult = Result.failure(
+                IllegalStateException(
+                    "Join the Ei Void Discord server with this account, then connect again.",
+                ),
+            ),
+        )
+        val vm = viewModel(discord = service)
+
+        vm.connectDiscord("one-time-token")
+
+        assertFalse(vm.discord.value.linked)
+        assertTrue(vm.discord.value.message.contains("Join the Ei Void Discord server"))
+        assertFalse(vm.discord.value.busy)
+    }
+
+    @Test
+    fun `refresh loads an existing discord link`() = runTest {
+        val service = FakeDiscordLinkService(
+            accountResult = Result.success(
+                EiVoidAccount(discord = DiscordIdentity(id = "7", username = "void")),
+            ),
+        )
+        val vm = viewModel(discord = service)
+
+        vm.refreshDiscord()
+
+        assertTrue(vm.discord.value.linked)
+        assertEquals("void", vm.discord.value.username)
+    }
+
+    @Test
+    fun `disconnect clears the linked discord user`() = runTest {
+        val service = FakeDiscordLinkService(
+            linkResult = Result.success(DiscordIdentity(id = "42", username = "cat")),
+        )
+        val vm = viewModel(discord = service)
+        vm.connectDiscord("one-time-token")
+
+        vm.disconnectDiscord()
+
+        assertFalse(vm.discord.value.linked)
+        assertEquals("", vm.discord.value.username)
+        assertTrue(vm.discord.value.message.contains("disconnected"))
+    }
+
+    @Test
+    fun `test requires a linked account before calling the service`() = runTest {
+        val service = FakeDiscordLinkService()
+        val vm = viewModel(discord = service)
+
+        vm.testDiscord()
+
+        assertFalse(service.testCalled)
+        assertTrue(vm.discord.value.message.contains("Connect Discord first"))
+    }
+
+    @Test
+    fun `sign out resets the discord card`() = runTest {
+        val service = FakeDiscordLinkService(
+            linkResult = Result.success(DiscordIdentity(id = "42", username = "cat")),
+        )
+        val vm = viewModel(discord = service)
+        vm.connectDiscord("one-time-token")
+
+        vm.signOut()
+
+        assertFalse(vm.discord.value.linked)
+        assertEquals("", vm.discord.value.username)
+    }
+
     private fun viewModel(
         secrets: FakeSecretStore = FakeSecretStore(),
         store: FakeSettingsStore = FakeSettingsStore(),
+        discord: DiscordLinkService = NoDiscordLinkService,
     ): SettingsViewModel {
         val workspaces = Files.createTempDirectory("void-workspaces").toFile()
         val cleaner = SessionCleaner(
@@ -134,7 +240,33 @@ class SettingsViewModelTest {
             NoSignOutHook,
             CoroutineScope(Dispatchers.Unconfined),
         )
-        return SettingsViewModel(secrets, store, cleaner, NoDiscordLinkService)
+        return SettingsViewModel(secrets, store, cleaner, discord)
+    }
+
+    private class FakeDiscordLinkService(
+        private var linkResult: Result<DiscordIdentity> =
+            Result.failure(IllegalStateException("not configured")),
+        private var unlinkResult: Result<Unit> = Result.success(Unit),
+        private var testResult: Result<Unit> = Result.success(Unit),
+        private var accountResult: Result<EiVoidAccount> =
+            Result.success(EiVoidAccount()),
+    ) : DiscordLinkService {
+        var lastAccessToken: String? = null
+        var testCalled = false
+
+        override suspend fun link(accessToken: String): Result<DiscordIdentity> {
+            lastAccessToken = accessToken
+            return linkResult
+        }
+
+        override suspend fun unlink(): Result<Unit> = unlinkResult
+
+        override suspend fun test(): Result<Unit> {
+            testCalled = true
+            return testResult
+        }
+
+        override suspend fun account(): Result<EiVoidAccount> = accountResult
     }
 
     private object NoDiscordLinkService : DiscordLinkService {

@@ -43,6 +43,24 @@
 `SESSION_SECRET`, `BOT_API_TOKEN` and `DATABASE_URL` are generated/wired by
 the Blueprint.
 
+### Discord OAuth for the Android app
+
+The app's Connect button uses Discord's authorization-code flow with PKCE; it
+does not use a client secret.
+
+1. In the Discord Developer Portal, open the application, enable
+   **OAuth2 → Public Client**, and add the exact redirect
+   `https://<web-host>/discord-callback`.
+2. In GitHub → Settings → Secrets and variables → Actions → Variables, set
+   `DISCORD_CLIENT_ID` to the public application id and `EI_VOID_API_URL` to
+   `https://<web-host>`. The Android and release workflows pass both to Gradle.
+3. Keep `DISCORD_APPLICATION_ID`, `DISCORD_GUILD_ID` and `DISCORD_BOT_TOKEN`
+   on the web service. The token is used only by `POST /api/v1/test/discord`.
+4. The bot worker uses the same application id and bot token.
+
+Without steps 1–2, Connect shows “Discord is not configured in this build”
+instead of opening Discord.
+
 ## 4. Verify
 
 - `GET https://<web-host>/healthz` returns `{ ok: true, store: "postgres", version }`.
