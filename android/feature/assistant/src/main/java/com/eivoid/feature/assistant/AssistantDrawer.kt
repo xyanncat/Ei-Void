@@ -1,6 +1,6 @@
 package com.eivoid.feature.assistant
 
-import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -12,41 +12,54 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.outlined.AddComment
+import androidx.compose.material.icons.outlined.BarChart
+import androidx.compose.material.icons.outlined.ChatBubbleOutline
+import androidx.compose.material.icons.outlined.ChevronRight
+import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.Explore
+import androidx.compose.material.icons.outlined.FolderOpen
+import androidx.compose.material.icons.outlined.Image
+import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material.icons.outlined.Sensors
+import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.StrokeJoin
-import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.eivoid.designsystem.component.VoidLogo
 import com.eivoid.designsystem.theme.VoidColors
 import com.eivoid.designsystem.theme.VoidTheme
 import kotlinx.coroutines.launch
@@ -54,17 +67,18 @@ import kotlinx.coroutines.launch
 /** The drawer's destinations. HOME is the assistant itself. */
 enum class AssistantDestination(val label: String) {
     HOME("Chat"),
-    IMAGES("Images"),
     LIBRARY("Library"),
-    CUSTOMIZE("Customize"),
     PROJECTS("Projects"),
     REMOTE("Remote"),
+    CUSTOMIZE("Customize"),
+    USAGE("Usage"),
+    IMAGES("Images"),
     EXPLORE("Explore"),
 }
 
 /**
- * The slide-out navigation. Charcoal, generous rows, one highlighted
- * destination and a quiet account footer.
+ * The slide-out navigation. A product drawer, not a list of links: brand,
+ * account, one primary action, grouped destinations and a quiet footer.
  */
 @Composable
 fun AssistantDrawer(
@@ -73,82 +87,206 @@ fun AssistantDrawer(
     onNavigate: (AssistantDestination) -> Unit,
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
+    onNewChat: () -> Unit = {},
 ) {
+    val shortViewport = LocalConfiguration.current.screenHeightDp < 600
     Column(
         modifier = modifier
             .fillMaxSize()
             .background(VoidColors.oledCharcoal)
             .statusBarsPadding()
             .navigationBarsPadding()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .then(
+                if (shortViewport) {
+                    Modifier.verticalScroll(rememberScrollState())
+                } else {
+                    Modifier
+                },
+            )
+            .padding(horizontal = 14.dp, vertical = 8.dp),
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 6.dp, bottom = 18.dp),
+                .padding(top = 4.dp, bottom = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                text = "Ei Void",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                color = VoidColors.oledTextPrimary,
-                modifier = Modifier.weight(1f),
-            )
+            VoidLogo(size = 34.dp, contentDescription = null)
+            Spacer(Modifier.width(10.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "EI VOID",
+                    style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 2.4.sp),
+                    color = VoidColors.oledTextPrimary,
+                )
+                Text(
+                    text = "Assistant",
+                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
+                    color = VoidColors.oledTextTertiary,
+                )
+            }
             AssistantCircleButton(
                 onClick = onClose,
-                contentDescription = "Search",
+                contentDescription = "Close navigation",
             ) {
                 Icon(
-                    imageVector = Icons.Outlined.Search,
+                    imageVector = Icons.Outlined.Close,
                     contentDescription = null,
-                    tint = VoidColors.oledTextPrimary,
-                    modifier = Modifier.size(20.dp),
+                    tint = VoidColors.oledTextSecondary,
+                    modifier = Modifier.size(19.dp),
                 )
             }
         }
 
+        Surface(
+            onClick = { onNavigate(AssistantDestination.CUSTOMIZE) },
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(18.dp),
+            color = VoidColors.oledSurfaceLow,
+            border = BorderStroke(1.dp, VoidColors.oledBorderSubtle),
+            tonalElevation = 0.dp,
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 11.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                VoidLogo(size = 30.dp, contentDescription = null)
+                Spacer(Modifier.width(10.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = accountLabel,
+                        style = MaterialTheme.typography.titleSmall,
+                        color = VoidColors.oledTextPrimary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Text(
+                        text = if (accountLabel == "Local workspace") {
+                            "On-device profile"
+                        } else {
+                            "Personal workspace"
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = VoidColors.oledTextSecondary,
+                    )
+                }
+                Icon(
+                    imageVector = Icons.Outlined.ChevronRight,
+                    contentDescription = null,
+                    tint = VoidColors.oledTextTertiary,
+                    modifier = Modifier.size(18.dp),
+                )
+            }
+        }
+
+        Spacer(Modifier.height(12.dp))
+        Surface(
+            onClick = {
+                onNewChat()
+                onClose()
+            },
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(14.dp),
+            color = VoidColors.oledAccentBlue,
+        ) {
+            Row(
+                modifier = Modifier.padding(vertical = 12.dp),
+                horizontalArrangement = androidx.compose.foundation.layout.Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.AddComment,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(18.dp),
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    text = "New chat",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = Color.White,
+                )
+            }
+        }
+
+        Spacer(Modifier.height(20.dp))
+        SectionLabel("WORKSPACE")
         DrawerRow(
             destination = AssistantDestination.HOME,
             selected = current == AssistantDestination.HOME,
             onClick = { onNavigate(AssistantDestination.HOME) },
         )
-
-        Spacer(Modifier.height(12.dp))
-        Box(
-            Modifier
-                .fillMaxWidth()
-                .height(1.dp)
-                .background(VoidColors.oledBorder),
+        DrawerRow(
+            destination = AssistantDestination.LIBRARY,
+            selected = current == AssistantDestination.LIBRARY,
+            onClick = { onNavigate(AssistantDestination.LIBRARY) },
         )
-        Spacer(Modifier.height(8.dp))
+        DrawerRow(
+            destination = AssistantDestination.PROJECTS,
+            selected = current == AssistantDestination.PROJECTS,
+            onClick = { onNavigate(AssistantDestination.PROJECTS) },
+        )
+        DrawerRow(
+            destination = AssistantDestination.REMOTE,
+            selected = current == AssistantDestination.REMOTE,
+            onClick = { onNavigate(AssistantDestination.REMOTE) },
+        )
 
-        DRAWER_DESTINATIONS.forEach { destination ->
-            DrawerRow(
-                destination = destination,
-                selected = current == destination,
-                onClick = { onNavigate(destination) },
+        Spacer(Modifier.height(18.dp))
+        SectionLabel("PREFERENCES")
+        DrawerRow(
+            destination = AssistantDestination.CUSTOMIZE,
+            selected = current == AssistantDestination.CUSTOMIZE,
+            onClick = { onNavigate(AssistantDestination.CUSTOMIZE) },
+        )
+        DrawerRow(
+            destination = AssistantDestination.USAGE,
+            selected = current == AssistantDestination.USAGE,
+            onClick = { onNavigate(AssistantDestination.USAGE) },
+        )
+
+        if (shortViewport) {
+            Spacer(Modifier.height(24.dp))
+        } else {
+            Spacer(Modifier.weight(1f))
+        }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.Lock,
+                contentDescription = null,
+                tint = VoidColors.oledTextTertiary,
+                modifier = Modifier.size(13.dp),
+            )
+            Spacer(Modifier.width(6.dp))
+            Text(
+                text = "Private by design",
+                style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 0.2.sp),
+                color = VoidColors.oledTextTertiary,
+            )
+            Spacer(Modifier.weight(1f))
+            Text(
+                text = "Ei Void",
+                style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 0.4.sp),
+                color = VoidColors.oledTextTertiary,
             )
         }
-
-        Spacer(Modifier.weight(1f))
-        Text(
-            text = "Ei Void · $accountLabel",
-            style = MaterialTheme.typography.labelSmall,
-            color = VoidColors.oledTextSecondary,
-            modifier = Modifier.padding(vertical = 14.dp),
-        )
     }
 }
 
-private val DRAWER_DESTINATIONS = listOf(
-    AssistantDestination.IMAGES,
-    AssistantDestination.LIBRARY,
-    AssistantDestination.CUSTOMIZE,
-    AssistantDestination.PROJECTS,
-    AssistantDestination.REMOTE,
-    AssistantDestination.EXPLORE,
-)
+@Composable
+private fun SectionLabel(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.2.sp),
+        color = VoidColors.oledTextTertiary,
+        modifier = Modifier.padding(start = 12.dp, bottom = 6.dp),
+    )
+}
 
 @Composable
 private fun DrawerRow(
@@ -156,195 +294,74 @@ private fun DrawerRow(
     selected: Boolean,
     onClick: () -> Unit,
 ) {
+    val icon = drawerIcon(destination)
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
+            .heightIn(min = 46.dp)
+            .clip(RoundedCornerShape(13.dp))
             .background(if (selected) VoidColors.oledSurface else Color.Transparent)
             .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 13.dp),
+            .padding(horizontal = 10.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        DrawerGlyph(destination)
-        Spacer(Modifier.width(14.dp))
+        Box(
+            modifier = Modifier
+                .size(30.dp)
+                .clip(RoundedCornerShape(10.dp))
+                .background(
+                    if (selected) {
+                        VoidColors.oledAccentBlue.copy(alpha = 0.13f)
+                    } else {
+                        Color.Transparent
+                    },
+                ),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = if (selected) VoidColors.oledAccentBlue else VoidColors.oledTextSecondary,
+                modifier = Modifier.size(19.dp),
+            )
+        }
+        Spacer(Modifier.width(10.dp))
         Text(
             text = destination.label,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            color = VoidColors.oledTextPrimary,
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
+            color = if (selected) VoidColors.oledTextPrimary else VoidColors.oledTextSecondary,
         )
-    }
-}
-
-/**
- * White line art for the drawer. Icons outside the Compose core set are drawn
- * here, so the module needs no extra icon dependency.
- */
-@Composable
-private fun DrawerGlyph(destination: AssistantDestination) {
-    Canvas(Modifier.size(22.dp)) {
-        val w = size.width
-        val h = size.height
-        val stroke = 1.6.dp.toPx()
-        val line = Stroke(width = stroke, cap = StrokeCap.Round, join = StrokeJoin.Round)
-        val white = Color.White
-
-        when (destination) {
-            AssistantDestination.HOME -> {
-                drawRoundRect(
-                    color = white,
-                    topLeft = Offset(w * 0.06f, h * 0.10f),
-                    size = Size(w * 0.88f, h * 0.66f),
-                    cornerRadius = CornerRadius(h * 0.18f),
-                    style = line,
-                )
-                drawLine(
-                    color = white,
-                    start = Offset(w * 0.30f, h * 0.76f),
-                    end = Offset(w * 0.24f, h * 0.94f),
-                    strokeWidth = stroke,
-                    cap = StrokeCap.Round,
-                )
-            }
-
-            AssistantDestination.IMAGES -> {
-                drawRoundRect(
-                    color = white,
-                    topLeft = Offset(w * 0.06f, h * 0.10f),
-                    size = Size(w * 0.88f, h * 0.80f),
-                    cornerRadius = CornerRadius(h * 0.12f),
-                    style = line,
-                )
-                drawCircle(
-                    color = white,
-                    radius = h * 0.09f,
-                    center = Offset(w * 0.35f, h * 0.35f),
-                    style = line,
-                )
-                drawPath(
-                    path = Path().apply {
-                        moveTo(w * 0.13f, h * 0.78f)
-                        lineTo(w * 0.40f, h * 0.50f)
-                        lineTo(w * 0.60f, h * 0.70f)
-                        lineTo(w * 0.72f, h * 0.58f)
-                        lineTo(w * 0.88f, h * 0.78f)
-                    },
-                    color = white,
-                    style = line,
-                )
-            }
-
-            AssistantDestination.LIBRARY -> {
-                drawRoundRect(
-                    color = white,
-                    topLeft = Offset(w * 0.10f, h * 0.14f),
-                    size = Size(w * 0.20f, h * 0.72f),
-                    cornerRadius = CornerRadius(h * 0.04f),
-                    style = line,
-                )
-                drawRoundRect(
-                    color = white,
-                    topLeft = Offset(w * 0.38f, h * 0.14f),
-                    size = Size(w * 0.20f, h * 0.72f),
-                    cornerRadius = CornerRadius(h * 0.04f),
-                    style = line,
-                )
-                drawLine(
-                    color = white,
-                    start = Offset(w * 0.70f, h * 0.20f),
-                    end = Offset(w * 0.88f, h * 0.82f),
-                    strokeWidth = stroke,
-                    cap = StrokeCap.Round,
-                )
-            }
-
-            AssistantDestination.CUSTOMIZE -> {
-                listOf(0.24f, 0.50f, 0.76f).forEach { y ->
-                    drawLine(
-                        color = white,
-                        start = Offset(w * 0.08f, h * y),
-                        end = Offset(w * 0.92f, h * y),
-                        strokeWidth = stroke,
-                        cap = StrokeCap.Round,
-                    )
-                }
-                drawCircle(white, radius = h * 0.08f, center = Offset(w * 0.34f, h * 0.24f))
-                drawCircle(white, radius = h * 0.08f, center = Offset(w * 0.66f, h * 0.50f))
-                drawCircle(white, radius = h * 0.08f, center = Offset(w * 0.46f, h * 0.76f))
-            }
-
-            AssistantDestination.PROJECTS -> {
-                drawPath(
-                    path = Path().apply {
-                        moveTo(w * 0.06f, h * 0.76f)
-                        lineTo(w * 0.06f, h * 0.24f)
-                        lineTo(w * 0.40f, h * 0.24f)
-                        lineTo(w * 0.48f, h * 0.38f)
-                        lineTo(w * 0.94f, h * 0.38f)
-                        lineTo(w * 0.94f, h * 0.76f)
-                        close()
-                    },
-                    color = white,
-                    style = line,
-                )
-            }
-
-            AssistantDestination.REMOTE -> {
-                drawCircle(
-                    color = white,
-                    radius = h * 0.075f,
-                    center = Offset(w * 0.5f, h * 0.82f),
-                )
-                drawArc(
-                    color = white,
-                    startAngle = 180f,
-                    sweepAngle = 180f,
-                    useCenter = false,
-                    topLeft = Offset(w * 0.22f, h * 0.44f),
-                    size = Size(w * 0.56f, h * 0.56f),
-                    style = line,
-                )
-                drawArc(
-                    color = white,
-                    startAngle = 180f,
-                    sweepAngle = 180f,
-                    useCenter = false,
-                    topLeft = Offset(w * 0.04f, h * 0.24f),
-                    size = Size(w * 0.92f, h * 0.92f),
-                    style = line,
-                )
-            }
-
-            AssistantDestination.EXPLORE -> {
-                drawCircle(
-                    color = white,
-                    radius = size.minDimension / 2f - stroke,
-                    style = line,
-                )
-                drawPath(
-                    path = Path().apply {
-                        moveTo(w * 0.62f, h * 0.28f)
-                        lineTo(w * 0.46f, h * 0.46f)
-                        lineTo(w * 0.38f, h * 0.72f)
-                        lineTo(w * 0.54f, h * 0.54f)
-                        close()
-                    },
-                    color = white,
-                    style = line,
-                )
-            }
+        Spacer(Modifier.weight(1f))
+        if (selected) {
+            Box(
+                modifier = Modifier
+                    .size(6.dp)
+                    .clip(RoundedCornerShape(50))
+                    .background(VoidColors.oledAccentBlue),
+            )
         }
     }
 }
 
+private fun drawerIcon(destination: AssistantDestination): ImageVector = when (destination) {
+    AssistantDestination.HOME -> Icons.Outlined.ChatBubbleOutline
+    AssistantDestination.LIBRARY -> Icons.Outlined.Notifications
+    AssistantDestination.PROJECTS -> Icons.Outlined.FolderOpen
+    AssistantDestination.REMOTE -> Icons.Outlined.Sensors
+    AssistantDestination.CUSTOMIZE -> Icons.Outlined.Tune
+    AssistantDestination.USAGE -> Icons.Outlined.BarChart
+    AssistantDestination.IMAGES -> Icons.Outlined.Image
+    AssistantDestination.EXPLORE -> Icons.Outlined.Explore
+}
+
 /* ------------------------------------------------------------------ */
-/* Shell                                                               */
+/* Legacy shell                                                        */
 /* ------------------------------------------------------------------ */
 
 /**
- * Entry point for the feature: hosts the drawer, the assistant home and the
- * placeholder destinations. Drop this into the app graph; it forces the
- * OLED dark theme for its own subtree only.
+ * Entry point for the feature used by the original standalone shell. The app
+ * graph uses VoidNavHost directly, but the shell remains for previews.
  */
 @Composable
 fun AssistantShell(
@@ -373,7 +390,6 @@ fun AssistantShell(
 
         fun navigate(target: AssistantDestination) {
             when (target) {
-                // Existing screens own these two destinations.
                 AssistantDestination.CUSTOMIZE -> {
                     destinationName = AssistantDestination.HOME.name
                     onOpenSettings()
@@ -391,11 +407,11 @@ fun AssistantShell(
 
         ModalNavigationDrawer(
             drawerState = drawerState,
-            scrimColor = Color.Black.copy(alpha = 0.6f),
+            scrimColor = Color.Black.copy(alpha = 0.62f),
             drawerContent = {
                 ModalDrawerSheet(
                     modifier = Modifier
-                        .width(320.dp)
+                        .width(316.dp)
                         .fillMaxHeight(),
                     drawerShape = RoundedCornerShape(topEnd = 26.dp, bottomEnd = 26.dp),
                     drawerContainerColor = VoidColors.oledCharcoal,
@@ -408,6 +424,7 @@ fun AssistantShell(
                         accountLabel = accountLabel,
                         onNavigate = { target -> navigate(target) },
                         onClose = { closeDrawer() },
+                        onNewChat = viewModel::clearChat,
                     )
                 }
             },
@@ -417,7 +434,7 @@ fun AssistantShell(
 
                 AssistantDestination.LIBRARY -> AssistantPlaceholderScreen(
                     title = "Library",
-                    message = "Saved prompts and files will live here in a later build.",
+                    message = "Your reminder library lives in the main app graph.",
                     onOpenDrawer = { openDrawer() },
                 )
 

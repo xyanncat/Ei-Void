@@ -10,29 +10,70 @@ data class AssistantMessage(
     val text: String,
 )
 
-/** A ready-made prompt shown as a suggestion chip and in Explore. */
-data class AssistantTask(val emoji: String, val label: String)
+/** The line icon used by a task card. Kept as a semantic value, not a glyph. */
+enum class AssistantTaskIcon {
+    CALENDAR,
+    RECEIPT,
+    CODE,
+    EDIT,
+    NEWS,
+    LANGUAGE,
+}
 
 /**
- * Two rows of four prompts, in the order they appear on the home screen.
+ * A ready-made prompt. The label is what the product shows; the prompt is what
+ * lands in the ask bar, so the card can stay short without losing intent.
  */
-val TASK_ROWS: List<List<AssistantTask>> = listOf(
-    listOf(
-        AssistantTask("📅", "Track deadlines"),
-        AssistantTask("💳", "Check subscriptions"),
-        AssistantTask("🧾", "Plan a payment"),
-        AssistantTask("🧠", "Summarize a repo"),
+data class AssistantTask(
+    val label: String,
+    val description: String,
+    val prompt: String,
+    val icon: AssistantTaskIcon,
+)
+
+/** The four capabilities on the assistant home. */
+val HOME_TASKS: List<AssistantTask> = listOf(
+    AssistantTask(
+        label = "Plan my day",
+        description = "Turn due dates and priorities into a plan.",
+        prompt = "Help me plan my day around my reminders and priorities.",
+        icon = AssistantTaskIcon.CALENDAR,
     ),
-    listOf(
-        AssistantTask("🗣️", "Learn a language"),
-        AssistantTask("📰", "Track industry news"),
-        AssistantTask("✉️", "Draft an email"),
-        AssistantTask("💻", "Review my code"),
+    AssistantTask(
+        label = "Review bills",
+        description = "Renewals, subscriptions and due dates.",
+        prompt = "Review my upcoming bills and subscriptions and flag anything that needs attention.",
+        icon = AssistantTaskIcon.RECEIPT,
+    ),
+    AssistantTask(
+        label = "Review code",
+        description = "Summarize a repository or review a change.",
+        prompt = "Review the active project and call out bugs, risky changes and missing tests.",
+        icon = AssistantTaskIcon.CODE,
+    ),
+    AssistantTask(
+        label = "Draft a message",
+        description = "Write a clear email, reply or update.",
+        prompt = "Draft a concise, professional message for me.",
+        icon = AssistantTaskIcon.EDIT,
     ),
 )
 
-/** Every task in reading order, used by the task picker and Explore. */
-val ALL_TASKS: List<AssistantTask> get() = TASK_ROWS.flatten()
+/** The long-form list used by the task picker and Explore. */
+val ALL_TASKS: List<AssistantTask> = HOME_TASKS + listOf(
+    AssistantTask(
+        label = "Catch up on news",
+        description = "Summarize what changed in a field you follow.",
+        prompt = "Summarize the most important recent developments in the field I follow.",
+        icon = AssistantTaskIcon.NEWS,
+    ),
+    AssistantTask(
+        label = "Learn something",
+        description = "Get a short, structured explanation.",
+        prompt = "Teach me the essentials of a topic in a short, structured lesson.",
+        icon = AssistantTaskIcon.LANGUAGE,
+    ),
+)
 
 /**
  * The assistant's brief. It is deliberately short: the provider tiers are

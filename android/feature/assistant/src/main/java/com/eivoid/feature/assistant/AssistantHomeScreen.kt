@@ -6,11 +6,9 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -23,6 +21,7 @@ import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.only
@@ -44,6 +43,24 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.AddAlert
+import androidx.compose.material.icons.outlined.ArrowUpward
+import androidx.compose.material.icons.outlined.CalendarMonth
+import androidx.compose.material.icons.outlined.ChevronRight
+import androidx.compose.material.icons.outlined.Code
+import androidx.compose.material.icons.outlined.EditNote
+import androidx.compose.material.icons.outlined.ErrorOutline
+import androidx.compose.material.icons.outlined.FolderOpen
+import androidx.compose.material.icons.outlined.GraphicEq
+import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material.icons.outlined.Menu
+import androidx.compose.material.icons.outlined.Mic
+import androidx.compose.material.icons.outlined.Newspaper
+import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material.icons.outlined.ReceiptLong
+import androidx.compose.material.icons.outlined.School
+import androidx.compose.material.icons.outlined.Tune
+import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -59,29 +76,27 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.eivoid.designsystem.component.VoidLogo
 import com.eivoid.designsystem.theme.VoidColors
+import java.time.LocalTime
 
 /**
- * The OLED assistant home: a transparent top bar, a centered suggestion
- * canvas, and a floating ask bar pinned above the keyboard.
+ * The assistant home: a quiet branded header, a small set of real starting
+ * points, the user's workspace shortcuts, and a floating composer. No emoji,
+ * no debug chrome, no oversized marketing headline.
  */
 @Composable
 fun AssistantHomeScreen(
@@ -121,6 +136,8 @@ fun AssistantHomeScreen(
                 AssistantEmptyState(
                     onPickTask = viewModel::addTask,
                     onOpenTaskPicker = viewModel::openTaskPicker,
+                    onOpenReminders = onOpenReminders,
+                    onOpenProjects = onOpenProjects,
                 )
             } else {
                 AssistantMessageList(
@@ -134,7 +151,7 @@ fun AssistantHomeScreen(
             AssistantErrorBanner(
                 message = message,
                 onOpenSettings = onOpenSettings,
-                modifier = Modifier.padding(horizontal = 14.dp, vertical = 4.dp),
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
             )
         }
 
@@ -162,7 +179,7 @@ fun AssistantHomeScreen(
 }
 
 /* ------------------------------------------------------------------ */
-/* Top bar                                                             */
+/* Header                                                              */
 /* ------------------------------------------------------------------ */
 
 @Composable
@@ -176,37 +193,55 @@ internal fun AssistantTopBar(
         modifier = modifier
             .fillMaxWidth()
             .statusBarsPadding()
-            .padding(horizontal = 14.dp, vertical = 10.dp),
+            .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         AssistantCircleButton(
             onClick = onOpenDrawer,
             contentDescription = "Open navigation",
         ) {
-            MenuGlyph(color = VoidColors.oledTextPrimary)
+            Icon(
+                imageVector = Icons.Outlined.Menu,
+                contentDescription = null,
+                tint = VoidColors.oledTextPrimary,
+                modifier = Modifier.size(20.dp),
+            )
+        }
+        Spacer(Modifier.width(12.dp))
+        VoidLogo(size = 30.dp, contentDescription = null)
+        Spacer(Modifier.width(10.dp))
+        Column {
+            Text(
+                text = "EI VOID",
+                style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 2.4.sp),
+                color = VoidColors.oledTextPrimary,
+            )
+            Text(
+                text = "AI workspace",
+                style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
+                color = VoidColors.oledTextTertiary,
+            )
         }
         Spacer(Modifier.weight(1f))
         AssistantCircleButton(
             onClick = onToggleIncognito,
             contentDescription = if (incognito) {
-                "Turn off incognito chat"
+                "Turn off incognito mode"
             } else {
-                "Start incognito chat"
+                "Start an incognito chat"
             },
             active = incognito,
         ) {
-            DashedChatGlyph(
-                color = if (incognito) {
-                    VoidColors.oledAccentBlue
-                } else {
-                    VoidColors.oledTextPrimary
-                },
+            Icon(
+                imageVector = Icons.Outlined.VisibilityOff,
+                contentDescription = null,
+                tint = if (incognito) VoidColors.oledAccentBlue else VoidColors.oledTextSecondary,
+                modifier = Modifier.size(19.dp),
             )
         }
     }
 }
 
-/** A 44 dp circular, hairline-bordered icon button on charcoal. */
 @Composable
 internal fun AssistantCircleButton(
     onClick: () -> Unit,
@@ -217,21 +252,21 @@ internal fun AssistantCircleButton(
 ) {
     Box(
         modifier = modifier
-            .size(44.dp)
+            .size(42.dp)
             .clip(CircleShape)
             .background(
                 if (active) {
-                    VoidColors.oledAccentBlue.copy(alpha = 0.16f)
+                    VoidColors.oledAccentBlue.copy(alpha = 0.14f)
                 } else {
-                    VoidColors.oledSurface
+                    VoidColors.oledSurfaceLow
                 },
             )
             .border(
                 width = 1.dp,
                 color = if (active) {
-                    VoidColors.oledAccentBlue.copy(alpha = 0.65f)
+                    VoidColors.oledAccentBlue.copy(alpha = 0.55f)
                 } else {
-                    VoidColors.oledBorder
+                    VoidColors.oledBorderSubtle
                 },
                 shape = CircleShape,
             )
@@ -239,64 +274,6 @@ internal fun AssistantCircleButton(
         contentAlignment = Alignment.Center,
     ) {
         content()
-    }
-}
-
-/** The two staggered lines of the drawer affordance. */
-@Composable
-internal fun MenuGlyph(color: Color, modifier: Modifier = Modifier) {
-    Canvas(modifier.size(20.dp)) {
-        val stroke = 2.dp.toPx()
-        drawLine(
-            color = color,
-            start = Offset(size.width * 0.14f, size.height * 0.36f),
-            end = Offset(size.width * 0.86f, size.height * 0.36f),
-            strokeWidth = stroke,
-            cap = StrokeCap.Round,
-        )
-        drawLine(
-            color = color,
-            start = Offset(size.width * 0.14f, size.height * 0.64f),
-            end = Offset(size.width * 0.60f, size.height * 0.64f),
-            strokeWidth = stroke,
-            cap = StrokeCap.Round,
-        )
-    }
-}
-
-/** A dashed circle with a small chat bubble inside: incognito chat. */
-@Composable
-private fun DashedChatGlyph(color: Color, modifier: Modifier = Modifier) {
-    Canvas(modifier.size(22.dp)) {
-        val stroke = 1.4.dp.toPx()
-        drawCircle(
-            color = color,
-            radius = size.minDimension / 2f - stroke,
-            style = Stroke(
-                width = stroke,
-                pathEffect = PathEffect.dashPathEffect(
-                    floatArrayOf(3.dp.toPx(), 2.6.dp.toPx()),
-                ),
-            ),
-        )
-        val bubbleWidth = size.width * 0.46f
-        val bubbleHeight = size.height * 0.34f
-        val left = (size.width - bubbleWidth) / 2f
-        val top = (size.height - bubbleHeight) / 2f - 1.dp.toPx()
-        drawRoundRect(
-            color = color,
-            topLeft = Offset(left, top),
-            size = Size(bubbleWidth, bubbleHeight),
-            cornerRadius = CornerRadius(bubbleHeight * 0.38f),
-            style = Stroke(width = stroke),
-        )
-        drawLine(
-            color = color,
-            start = Offset(left + bubbleWidth * 0.30f, top + bubbleHeight),
-            end = Offset(left + bubbleWidth * 0.24f, top + bubbleHeight + 2.2.dp.toPx()),
-            strokeWidth = stroke,
-            cap = StrokeCap.Round,
-        )
     }
 }
 
@@ -308,146 +285,321 @@ private fun DashedChatGlyph(color: Color, modifier: Modifier = Modifier) {
 private fun AssistantEmptyState(
     onPickTask: (String) -> Unit,
     onOpenTaskPicker: () -> Unit,
+    onOpenReminders: () -> Unit,
+    onOpenProjects: () -> Unit,
 ) {
-    // In landscape the assistant canvas is only ~400dp tall. Shrink the
-    // headline and spacing so both chip rows and "Pick a task" are visible
-    // without scrolling; portrait keeps the full-size composition.
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-        val compact = maxHeight < 420.dp
-        Box(
+        val compact = maxHeight < 480.dp
+        val hour = remember { LocalTime.now().hour }
+        val greeting = when (hour) {
+            in 5..11 -> "Good morning."
+            in 12..16 -> "Good afternoon."
+            else -> "Good evening."
+        }
+
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 12.dp),
-            // In a short landscape viewport, center alignment pushes the
-            // bottom of the composition behind the ask bar. Start at the top
-            // instead so both rows and "Pick a task" remain reachable.
-            contentAlignment = if (compact) Alignment.TopCenter else Alignment.Center,
+                .padding(horizontal = 20.dp),
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = if (compact) 8.dp else 0.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Text(
-                    text = "Put Ei Void to work",
-                    style = if (compact) {
-                        MaterialTheme.typography.headlineSmall
-                    } else {
-                        MaterialTheme.typography.displaySmall
-                    },
-                    fontWeight = FontWeight.Bold,
-                    color = VoidColors.oledTextPrimary,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(horizontal = 20.dp),
+            Spacer(Modifier.height(if (compact) 12.dp else 34.dp))
+
+            Text(
+                text = greeting,
+                style = if (compact) {
+                    MaterialTheme.typography.headlineLarge
+                } else {
+                    MaterialTheme.typography.displaySmall
+                },
+                fontWeight = FontWeight.Bold,
+                color = VoidColors.oledTextPrimary,
+            )
+            Spacer(Modifier.height(6.dp))
+            Text(
+                text = "What would you like to get done?",
+                style = if (compact) {
+                    MaterialTheme.typography.bodyMedium
+                } else {
+                    MaterialTheme.typography.bodyLarge
+                },
+                color = VoidColors.oledTextSecondary,
+            )
+
+            Spacer(Modifier.height(if (compact) 16.dp else 30.dp))
+            SectionHeader(
+                title = "START A TASK",
+                action = "See all",
+                onAction = onOpenTaskPicker,
+            )
+            Spacer(Modifier.height(if (compact) 8.dp else 12.dp))
+
+            TaskGrid(
+                tasks = HOME_TASKS,
+                compact = compact,
+                onPick = { task -> onPickTask(task.prompt) },
+            )
+
+            if (!compact) {
+                Spacer(Modifier.height(26.dp))
+                SectionHeader(title = "YOUR WORKSPACE")
+                Spacer(Modifier.height(12.dp))
+                WorkspaceCard(
+                    onOpenReminders = onOpenReminders,
+                    onOpenProjects = onOpenProjects,
                 )
-                Spacer(Modifier.height(if (compact) 4.dp else 22.dp))
+                Spacer(Modifier.height(20.dp))
+                PrivacyNote()
+                Spacer(Modifier.height(16.dp))
+            }
+        }
+    }
+}
 
-                TASK_ROWS.forEach { row ->
-                    SuggestionRow(tasks = row, onPick = onPickTask, compact = compact)
-                    Spacer(Modifier.height(if (compact) 1.dp else 6.dp))
-                }
+@Composable
+private fun SectionHeader(
+    title: String,
+    action: String? = null,
+    onAction: (() -> Unit)? = null,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.4.sp),
+            color = VoidColors.oledTextTertiary,
+            modifier = Modifier.weight(1f),
+        )
+        if (action != null && onAction != null) {
+            Text(
+                text = action,
+                style = MaterialTheme.typography.labelMedium,
+                color = VoidColors.oledAccentBlue,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(50))
+                    .clickable(onClick = onAction)
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
+            )
+        }
+    }
+}
 
-                Spacer(Modifier.height(if (compact) 3.dp else 14.dp))
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(50))
-                        .background(VoidColors.oledBlack)
-                        .border(1.dp, VoidColors.oledBorder, RoundedCornerShape(50))
-                        .clickable(onClick = onOpenTaskPicker)
-                        .padding(
-                            horizontal = 22.dp,
-                            vertical = if (compact) 8.dp else 12.dp,
-                        ),
-                ) {
-                    Text(
-                        text = "Pick a task",
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = VoidColors.oledTextPrimary,
+@Composable
+private fun TaskGrid(
+    tasks: List<AssistantTask>,
+    compact: Boolean,
+    onPick: (AssistantTask) -> Unit,
+) {
+    val columns = if (compact) 4 else 2
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        tasks.chunked(columns).forEach { rowTasks ->
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                rowTasks.forEach { task ->
+                    TaskCard(
+                        task = task,
+                        compact = compact,
+                        onClick = { onPick(task) },
+                        modifier = Modifier.weight(1f),
                     )
                 }
+                repeat(columns - rowTasks.size) {
+                    Spacer(Modifier.weight(1f))
+                }
             }
         }
     }
 }
 
-/**
- * One horizontal chip row. The row scrolls under soft black fades at both
- * edges, so long lists feel like they continue past the screen.
- */
 @Composable
-private fun SuggestionRow(
-    tasks: List<AssistantTask>,
-    onPick: (String) -> Unit,
-    compact: Boolean = false,
+private fun TaskCard(
+    task: AssistantTask,
+    compact: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    Box(modifier = Modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState())
-                .padding(vertical = 2.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            tasks.forEach { task ->
-                SuggestionChip(
-                    task = task,
-                    onClick = { onPick(task.label) },
-                    compact = compact,
+    Surface(
+        onClick = onClick,
+        modifier = modifier.heightIn(min = if (compact) 62.dp else 110.dp),
+        shape = RoundedCornerShape(18.dp),
+        color = VoidColors.oledSurfaceLow,
+        border = BorderStroke(1.dp, VoidColors.oledBorderSubtle),
+        tonalElevation = 0.dp,
+    ) {
+        if (compact) {
+            Row(
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                TaskIconTile(icon = task.icon, size = 30.dp)
+                Spacer(Modifier.width(10.dp))
+                Text(
+                    text = task.label,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = VoidColors.oledTextPrimary,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        } else {
+            Column(
+                modifier = Modifier.padding(horizontal = 14.dp, vertical = 14.dp),
+            ) {
+                TaskIconTile(icon = task.icon, size = 34.dp)
+                Spacer(Modifier.height(12.dp))
+                Text(
+                    text = task.label,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = VoidColors.oledTextPrimary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Spacer(Modifier.height(3.dp))
+                Text(
+                    text = task.description,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = VoidColors.oledTextSecondary,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
         }
+    }
+}
 
-        Canvas(Modifier.matchParentSize()) {
-            val fade = 34.dp.toPx()
-            drawRect(
-                brush = Brush.horizontalGradient(
-                    0f to VoidColors.oledBlack,
-                    1f to Color.Transparent,
-                    startX = 0f,
-                    endX = fade,
-                ),
+@Composable
+private fun TaskIconTile(icon: AssistantTaskIcon, size: androidx.compose.ui.unit.Dp) {
+    Box(
+        modifier = Modifier
+            .size(size)
+            .clip(RoundedCornerShape(11.dp))
+            .background(VoidColors.oledAccentBlue.copy(alpha = 0.12f)),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            imageVector = taskIcon(icon),
+            contentDescription = null,
+            tint = VoidColors.oledAccentBlue,
+            modifier = Modifier.size(size * 0.53f),
+        )
+    }
+}
+
+internal fun taskIcon(icon: AssistantTaskIcon): ImageVector = when (icon) {
+    AssistantTaskIcon.CALENDAR -> Icons.Outlined.CalendarMonth
+    AssistantTaskIcon.RECEIPT -> Icons.Outlined.ReceiptLong
+    AssistantTaskIcon.CODE -> Icons.Outlined.Code
+    AssistantTaskIcon.EDIT -> Icons.Outlined.EditNote
+    AssistantTaskIcon.NEWS -> Icons.Outlined.Newspaper
+    AssistantTaskIcon.LANGUAGE -> Icons.Outlined.School
+}
+
+@Composable
+private fun WorkspaceCard(
+    onOpenReminders: () -> Unit,
+    onOpenProjects: () -> Unit,
+) {
+    Surface(
+        shape = RoundedCornerShape(20.dp),
+        color = VoidColors.oledSurfaceLow,
+        border = BorderStroke(1.dp, VoidColors.oledBorderSubtle),
+        tonalElevation = 0.dp,
+    ) {
+        Column {
+            WorkspaceRow(
+                icon = Icons.Outlined.Notifications,
+                title = "Reminder library",
+                subtitle = "Bills, renewals and subscriptions",
+                onClick = onOpenReminders,
             )
-            drawRect(
-                brush = Brush.horizontalGradient(
-                    0f to Color.Transparent,
-                    1f to VoidColors.oledBlack,
-                    startX = size.width - fade,
-                    endX = size.width,
-                ),
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(start = 64.dp)
+                    .height(1.dp)
+                    .background(VoidColors.oledBorderSubtle),
+            )
+            WorkspaceRow(
+                icon = Icons.Outlined.FolderOpen,
+                title = "Projects",
+                subtitle = "Repositories and agent runs",
+                onClick = onOpenProjects,
             )
         }
     }
 }
 
 @Composable
-private fun SuggestionChip(
-    task: AssistantTask,
+private fun WorkspaceRow(
+    icon: ImageVector,
+    title: String,
+    subtitle: String,
     onClick: () -> Unit,
-    compact: Boolean = false,
 ) {
     Row(
         modifier = Modifier
-            .clip(RoundedCornerShape(50))
-            .background(VoidColors.oledSurface)
-            .border(1.dp, VoidColors.oledBorder, RoundedCornerShape(50))
+            .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(
-                horizontal = if (compact) 12.dp else 14.dp,
-                vertical = if (compact) 4.dp else 10.dp,
-            ),
+            .padding(horizontal = 14.dp, vertical = 13.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(text = task.emoji, fontSize = if (compact) 13.sp else 15.sp)
-        Spacer(Modifier.width(if (compact) 6.dp else 8.dp))
+        Box(
+            modifier = Modifier
+                .size(36.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(VoidColors.oledSurfaceHigh),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = VoidColors.oledTextSecondary,
+                modifier = Modifier.size(18.dp),
+            )
+        }
+        Spacer(Modifier.width(12.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleSmall,
+                color = VoidColors.oledTextPrimary,
+            )
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = VoidColors.oledTextSecondary,
+            )
+        }
+        Icon(
+            imageVector = Icons.Outlined.ChevronRight,
+            contentDescription = null,
+            tint = VoidColors.oledTextTertiary,
+            modifier = Modifier.size(18.dp),
+        )
+    }
+}
+
+@Composable
+private fun PrivacyNote() {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = Icons.Outlined.Lock,
+            contentDescription = null,
+            tint = VoidColors.oledTextTertiary,
+            modifier = Modifier.size(13.dp),
+        )
+        Spacer(Modifier.width(6.dp))
         Text(
-            text = task.label,
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.Medium,
-            color = VoidColors.oledTextPrimary.copy(alpha = 0.84f),
+            text = "Your prompts and keys stay on this device.",
+            style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
+            color = VoidColors.oledTextTertiary,
         )
     }
 }
@@ -469,8 +621,8 @@ private fun AssistantMessageList(
     LazyColumn(
         state = listState,
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(18.dp),
     ) {
         items(items = messages, key = { it.id }) { message ->
             when (message.role) {
@@ -488,21 +640,21 @@ private fun AssistantMessageList(
 private fun UserBubble(text: String) {
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
         Surface(
-            modifier = Modifier.widthIn(max = 300.dp),
+            modifier = Modifier.widthIn(max = 320.dp),
             shape = RoundedCornerShape(
-                topStart = 20.dp,
-                topEnd = 20.dp,
+                topStart = 18.dp,
+                topEnd = 18.dp,
                 bottomEnd = 6.dp,
-                bottomStart = 20.dp,
+                bottomStart = 18.dp,
             ),
-            color = VoidColors.oledSurface,
-            border = BorderStroke(1.dp, VoidColors.oledBorder),
+            color = VoidColors.oledSurfaceHigh,
+            border = BorderStroke(1.dp, VoidColors.oledBorderSubtle),
         ) {
             Text(
                 text = text,
                 style = MaterialTheme.typography.bodyLarge,
                 color = VoidColors.oledTextPrimary,
-                modifier = Modifier.padding(horizontal = 15.dp, vertical = 10.dp),
+                modifier = Modifier.padding(horizontal = 15.dp, vertical = 11.dp),
             )
         }
     }
@@ -511,12 +663,16 @@ private fun UserBubble(text: String) {
 @Composable
 private fun AssistantTurn(text: String, streaming: Boolean) {
     Column(modifier = Modifier.fillMaxWidth()) {
-        Text(
-            text = "EI VOID",
-            style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.4.sp),
-            color = VoidColors.oledTextSecondary,
-        )
-        Spacer(Modifier.height(4.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            VoidLogo(size = 20.dp, contentDescription = null)
+            Spacer(Modifier.width(8.dp))
+            Text(
+                text = "EI VOID",
+                style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.6.sp),
+                color = VoidColors.oledTextTertiary,
+            )
+        }
+        Spacer(Modifier.height(8.dp))
         if (text.isNotBlank()) {
             Text(
                 text = text,
@@ -525,7 +681,7 @@ private fun AssistantTurn(text: String, streaming: Boolean) {
             )
         }
         if (streaming) {
-            Spacer(Modifier.height(6.dp))
+            Spacer(Modifier.height(8.dp))
             StreamingDots()
         }
     }
@@ -546,7 +702,7 @@ private fun StreamingDots() {
         repeat(3) { index ->
             Box(
                 modifier = Modifier
-                    .size(6.dp)
+                    .size(5.dp)
                     .clip(CircleShape)
                     .background(
                         VoidColors.oledAccentBlue.copy(
@@ -572,36 +728,42 @@ private fun AssistantErrorBanner(
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        color = VoidColors.oledSurface,
-        border = BorderStroke(1.dp, VoidColors.oledAccentBlue.copy(alpha = 0.45f)),
+        color = VoidColors.oledSurfaceLow,
+        border = BorderStroke(1.dp, VoidColors.oledDanger.copy(alpha = 0.35f)),
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 11.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            Icon(
+                imageVector = Icons.Outlined.ErrorOutline,
+                contentDescription = null,
+                tint = VoidColors.oledDanger,
+                modifier = Modifier.size(18.dp),
+            )
+            Spacer(Modifier.width(10.dp))
             Text(
                 text = message,
                 style = MaterialTheme.typography.bodySmall,
-                color = VoidColors.oledTextPrimary.copy(alpha = 0.9f),
+                color = VoidColors.oledTextPrimary,
                 modifier = Modifier.weight(1f),
             )
             Spacer(Modifier.width(10.dp))
             Text(
                 text = "Customize",
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.labelMedium,
                 color = VoidColors.oledAccentBlue,
                 modifier = Modifier
                     .clip(RoundedCornerShape(50))
                     .clickable(onClick = onOpenSettings)
-                    .padding(horizontal = 10.dp, vertical = 6.dp),
+                    .padding(horizontal = 8.dp, vertical = 6.dp),
             )
         }
     }
 }
 
 /* ------------------------------------------------------------------ */
-/* Input bar                                                           */
+/* Composer                                                            */
 /* ------------------------------------------------------------------ */
 
 @Composable
@@ -617,53 +779,59 @@ private fun AssistantInputBar(
     modifier: Modifier = Modifier,
 ) {
     var menuOpen by remember { mutableStateOf(false) }
-    // Keep the ask bar slim in a short landscape viewport so it does not
-    // cover the "Pick a task" action.
     val compact = LocalConfiguration.current.screenHeightDp < 420
-    val controlSize = if (compact) 36.dp else 40.dp
+    val hasInput = value.isNotBlank()
 
-    Box(
+    Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = if (compact) 3.dp else 8.dp),
+            .padding(horizontal = 16.dp, vertical = if (compact) 5.dp else 9.dp),
     ) {
         Surface(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(28.dp),
+            shape = RoundedCornerShape(26.dp),
             color = VoidColors.oledSurface,
             border = BorderStroke(1.dp, VoidColors.oledBorder),
+            shadowElevation = if (compact) 0.dp else 10.dp,
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(
-                        horizontal = 6.dp,
-                        vertical = if (compact) 3.dp else 6.dp,
-                    ),
+                    .padding(horizontal = 6.dp, vertical = if (compact) 5.dp else 6.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Box {
                     Box(
                         modifier = Modifier
-                            .size(controlSize)
+                            .size(40.dp)
                             .clip(CircleShape)
-                            .clickable(onClickLabel = "Add", onClick = { menuOpen = true }),
+                            .clickable(
+                                onClickLabel = "Add",
+                                onClick = { menuOpen = true },
+                            ),
                         contentAlignment = Alignment.Center,
                     ) {
                         Icon(
                             imageVector = Icons.Outlined.Add,
                             contentDescription = "Add",
-                            tint = VoidColors.oledTextPrimary,
+                            tint = VoidColors.oledTextSecondary,
                             modifier = Modifier.size(22.dp),
                         )
                     }
                     DropdownMenu(
                         expanded = menuOpen,
                         onDismissRequest = { menuOpen = false },
-                        containerColor = VoidColors.oledSurface,
+                        containerColor = VoidColors.oledSurfaceHigh,
                     ) {
                         DropdownMenuItem(
-                            text = { Text("Add reminder", color = VoidColors.oledTextPrimary) },
+                            text = { Text("New reminder", color = VoidColors.oledTextPrimary) },
+                            leadingIcon = {
+                                Icon(
+                                    Icons.Outlined.AddAlert,
+                                    contentDescription = null,
+                                    tint = VoidColors.oledTextSecondary,
+                                )
+                            },
                             onClick = {
                                 menuOpen = false
                                 onAddReminder()
@@ -671,6 +839,13 @@ private fun AssistantInputBar(
                         )
                         DropdownMenuItem(
                             text = { Text("Projects", color = VoidColors.oledTextPrimary) },
+                            leadingIcon = {
+                                Icon(
+                                    Icons.Outlined.FolderOpen,
+                                    contentDescription = null,
+                                    tint = VoidColors.oledTextSecondary,
+                                )
+                            },
                             onClick = {
                                 menuOpen = false
                                 onOpenProjects()
@@ -678,6 +853,13 @@ private fun AssistantInputBar(
                         )
                         DropdownMenuItem(
                             text = { Text("Customize", color = VoidColors.oledTextPrimary) },
+                            leadingIcon = {
+                                Icon(
+                                    Icons.Outlined.Tune,
+                                    contentDescription = null,
+                                    tint = VoidColors.oledTextSecondary,
+                                )
+                            },
                             onClick = {
                                 menuOpen = false
                                 onOpenSettings()
@@ -696,16 +878,16 @@ private fun AssistantInputBar(
                         color = VoidColors.oledTextPrimary,
                     ),
                     cursorBrush = SolidColor(VoidColors.oledAccentBlue),
-                    maxLines = 4,
+                    maxLines = 5,
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
                     keyboardActions = KeyboardActions(onSend = { onSend() }),
                     decorationBox = { innerTextField ->
                         Box {
                             if (value.isBlank()) {
                                 Text(
-                                    text = "Ask Ei Void",
+                                    text = "Message Ei Void",
                                     style = MaterialTheme.typography.bodyLarge,
-                                    color = VoidColors.oledTextSecondary,
+                                    color = VoidColors.oledTextTertiary,
                                 )
                             }
                             innerTextField()
@@ -715,15 +897,19 @@ private fun AssistantInputBar(
 
                 Box(
                     modifier = Modifier
-                        .size(controlSize)
+                        .size(40.dp)
                         .clip(CircleShape)
                         .clickable(onClickLabel = "Dictate", onClick = onDictate),
                     contentAlignment = Alignment.Center,
                 ) {
-                    MicGlyph(color = VoidColors.oledTextPrimary)
+                    Icon(
+                        imageVector = Icons.Outlined.Mic,
+                        contentDescription = "Dictate",
+                        tint = VoidColors.oledTextSecondary,
+                        modifier = Modifier.size(20.dp),
+                    )
                 }
-                Spacer(Modifier.width(2.dp))
-                val hasInput = value.isNotBlank()
+                Spacer(Modifier.width(4.dp))
                 Box(
                     modifier = Modifier
                         .size(if (compact) 40.dp else 44.dp)
@@ -736,93 +922,35 @@ private fun AssistantInputBar(
                     contentAlignment = Alignment.Center,
                 ) {
                     if (hasInput) {
-                        SendArrowGlyph(color = Color.White)
+                        Icon(
+                            imageVector = Icons.Outlined.ArrowUpward,
+                            contentDescription = "Send",
+                            tint = Color.White,
+                            modifier = Modifier.size(21.dp),
+                        )
                     } else {
-                        WaveformGlyph(color = Color.White)
+                        Icon(
+                            imageVector = Icons.Outlined.GraphicEq,
+                            contentDescription = "Live voice",
+                            tint = Color.White,
+                            modifier = Modifier.size(21.dp),
+                        )
                     }
                 }
             }
         }
-    }
-}
 
-/** A white outline microphone: capsule, cradle and stand. */
-@Composable
-private fun MicGlyph(color: Color, modifier: Modifier = Modifier) {
-    Canvas(modifier.size(20.dp)) {
-        val stroke = 1.6.dp.toPx()
-        val bodyWidth = size.width * 0.32f
-        drawRoundRect(
-            color = color,
-            topLeft = Offset((size.width - bodyWidth) / 2f, size.height * 0.06f),
-            size = Size(bodyWidth, size.height * 0.46f),
-            cornerRadius = CornerRadius(bodyWidth / 2f),
-            style = Stroke(width = stroke),
-        )
-        drawArc(
-            color = color,
-            startAngle = 0f,
-            sweepAngle = 180f,
-            useCenter = false,
-            topLeft = Offset(size.width * 0.22f, size.height * 0.30f),
-            size = Size(size.width * 0.56f, size.height * 0.34f),
-            style = Stroke(width = stroke, cap = StrokeCap.Round),
-        )
-        drawLine(
-            color = color,
-            start = Offset(size.width * 0.5f, size.height * 0.64f),
-            end = Offset(size.width * 0.5f, size.height * 0.86f),
-            strokeWidth = stroke,
-            cap = StrokeCap.Round,
-        )
-    }
-}
-
-/** A white up arrow: the blue button becomes Send once the user has typed. */
-@Composable
-private fun SendArrowGlyph(color: Color, modifier: Modifier = Modifier) {
-    Canvas(modifier.size(20.dp)) {
-        val stroke = 2.2.dp.toPx()
-        drawLine(
-            color = color,
-            start = Offset(size.width * 0.5f, size.height * 0.82f),
-            end = Offset(size.width * 0.5f, size.height * 0.18f),
-            strokeWidth = stroke,
-            cap = StrokeCap.Round,
-        )
-        drawLine(
-            color = color,
-            start = Offset(size.width * 0.5f, size.height * 0.18f),
-            end = Offset(size.width * 0.22f, size.height * 0.46f),
-            strokeWidth = stroke,
-            cap = StrokeCap.Round,
-        )
-        drawLine(
-            color = color,
-            start = Offset(size.width * 0.5f, size.height * 0.18f),
-            end = Offset(size.width * 0.78f, size.height * 0.46f),
-            strokeWidth = stroke,
-            cap = StrokeCap.Round,
-        )
-    }
-}
-
-/** Five rounded bars: the live voice action. */
-@Composable
-private fun WaveformGlyph(color: Color, modifier: Modifier = Modifier) {
-    Canvas(modifier.size(20.dp)) {
-        val stroke = 2.4.dp.toPx()
-        val heights = listOf(0.28f, 0.55f, 0.90f, 0.62f, 0.34f)
-        val step = size.width / (heights.size + 1)
-        heights.forEachIndexed { index, fraction ->
-            val x = step * (index + 1)
-            val half = size.height * fraction / 2f
-            drawLine(
-                color = color,
-                start = Offset(x, size.height / 2f - half),
-                end = Offset(x, size.height / 2f + half),
-                strokeWidth = stroke,
-                cap = StrokeCap.Round,
+        if (!compact) {
+            Spacer(Modifier.height(7.dp))
+            Text(
+                text = "Ei Void can make mistakes. Check important information.",
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontSize = 10.sp,
+                    letterSpacing = 0.2.sp,
+                ),
+                color = VoidColors.oledTextTertiary,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth(),
             )
         }
     }
@@ -840,44 +968,87 @@ private fun AssistantTaskPicker(
     Dialog(onDismissRequest = onDismiss) {
         Surface(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(28.dp),
+            shape = RoundedCornerShape(26.dp),
             color = VoidColors.oledCharcoal,
             border = BorderStroke(1.dp, VoidColors.oledBorder),
         ) {
             Column(modifier = Modifier.padding(20.dp)) {
                 Text(
-                    text = "Pick a task",
+                    text = "Start a task",
                     style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
                     color = VoidColors.oledTextPrimary,
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    text = "Ei Void will start from this prompt.",
+                    text = "Choose a starting point. You can edit it before sending.",
                     style = MaterialTheme.typography.bodySmall,
                     color = VoidColors.oledTextSecondary,
                 )
                 Spacer(Modifier.height(14.dp))
-                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                Column(
+                    modifier = Modifier
+                        .heightIn(max = 420.dp)
+                        .verticalScroll(rememberScrollState()),
+                ) {
                     ALL_TASKS.forEach { task ->
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(14.dp))
-                                .clickable { onPick(task.label) }
-                                .padding(horizontal = 10.dp, vertical = 12.dp),
+                                .clip(RoundedCornerShape(16.dp))
+                                .clickable { onPick(task.prompt) }
+                                .padding(horizontal = 10.dp, vertical = 11.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            Text(text = task.emoji, fontSize = 17.sp)
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(VoidColors.oledAccentBlue.copy(alpha = 0.12f)),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Icon(
+                                    imageVector = taskIcon(task.icon),
+                                    contentDescription = null,
+                                    tint = VoidColors.oledAccentBlue,
+                                    modifier = Modifier.size(18.dp),
+                                )
+                            }
                             Spacer(Modifier.width(12.dp))
-                            Text(
-                                text = task.label,
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = VoidColors.oledTextPrimary,
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = task.label,
+                                    style = MaterialTheme.typography.titleSmall,
+                                    color = VoidColors.oledTextPrimary,
+                                )
+                                Text(
+                                    text = task.description,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = VoidColors.oledTextSecondary,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
+                            Icon(
+                                imageVector = Icons.Outlined.ChevronRight,
+                                contentDescription = null,
+                                tint = VoidColors.oledTextTertiary,
+                                modifier = Modifier.size(18.dp),
                             )
                         }
                     }
                 }
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = "Cancel",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = VoidColors.oledTextSecondary,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(50))
+                        .clickable(onClick = onDismiss)
+                        .padding(vertical = 10.dp),
+                )
             }
         }
     }

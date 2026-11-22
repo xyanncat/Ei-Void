@@ -71,6 +71,7 @@ private val TOP_LEVEL_ROUTES = setOf(
     ROUTE_IMAGES,
     ROUTE_REMOTE,
     ROUTE_EXPLORE,
+    ROUTE_USAGE,
 )
 
 private fun drawerDestinationFor(route: String?): AssistantDestination = when (route) {
@@ -80,6 +81,7 @@ private fun drawerDestinationFor(route: String?): AssistantDestination = when (r
     ROUTE_REPOS -> AssistantDestination.PROJECTS
     ROUTE_REMOTE -> AssistantDestination.REMOTE
     ROUTE_EXPLORE -> AssistantDestination.EXPLORE
+    ROUTE_USAGE -> AssistantDestination.USAGE
     else -> AssistantDestination.HOME
 }
 
@@ -91,6 +93,7 @@ private fun routeFor(destination: AssistantDestination): String = when (destinat
     AssistantDestination.PROJECTS -> ROUTE_REPOS
     AssistantDestination.REMOTE -> ROUTE_REMOTE
     AssistantDestination.EXPLORE -> ROUTE_EXPLORE
+    AssistantDestination.USAGE -> ROUTE_USAGE
 }
 
 @Composable
@@ -155,6 +158,10 @@ fun VoidNavHost(
                     accountLabel = userName,
                     onNavigate = { destination -> navigateTo(destination) },
                     onClose = closeDrawer,
+                    onNewChat = {
+                        assistantViewModel.clearChat()
+                        navigateTop(ROUTE_ASSISTANT)
+                    },
                 )
             }
         },

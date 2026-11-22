@@ -67,6 +67,34 @@ Evidence screenshots: `v2-home2.png`, `new-drawer.png`, `v2-library-saved.png`,
 `redmi-discord-5-snore.png`, `redmi-discord-6-result.png`,
 `release-v0.2.0-emulator.png`, `redmi-release-v0.2.0.png`.
 
+## Production UI pass (2026-11-22)
+
+The assistant is no longer a debug shell with oversized copy and emoji chips.
+
+- **No debug ribbon.** The yellow Clerk-bypass banner is gone from the product
+  surface; local previews are identified inside Customize, not above every
+  screen. System bars are black with light icons on the OLED canvas.
+- **Inter typography.** Bundled Inter Regular/Medium/SemiBold/Bold gives the
+  app one a product-owned type scale instead of OEM Roboto.
+- **Assistant home.** A branded header (menu, cat mark, wordmark, incognito),
+  a short greeting, four capability cards with vector icons and descriptions,
+  a workspace card, a privacy line and a floating composer.
+- **Drawer.** Brand header, account card (local workspace shows “On-device
+  profile”), a primary New chat action, grouped Workspace/Preferences sections,
+  selected-state treatment, and a scrollable short-viewport layout.
+- **Composer.** Plus menu with line icons, Inter input text, dictation, and a
+  blue voice/send action that switches to an up arrow when there is text.
+- **Chat.** Refined user bubbles, assistant mark, streaming dots, and an
+  actionable provider error banner.
+- **Icons.** Material outlined icons for every structural action; no emoji
+  used as navigation or task artwork.
+
+Verified on the emulator: portrait home, landscape home (four compact cards),
+drawer in both orientations including scrolling to Usage, composer typing and
+send, provider error state, and navigation to Library and Customize. Evidence:
+`redesign-home-2.png`, `redesign-drawer-1.png`, `redesign-chat-1.png`,
+`redesign-final-home-landscape.png`, `redesign-drawer-landscape-2.png`.
+
 ## Installing on this Redmi
 
 With **Install via USB** and **USB debugging (Security settings)** enabled,

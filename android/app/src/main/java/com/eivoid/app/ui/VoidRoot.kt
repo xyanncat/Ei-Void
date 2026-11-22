@@ -2,21 +2,19 @@ package com.eivoid.app.ui
 
 import android.Manifest
 import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
 import android.content.pm.PackageManager
-import android.view.Window
+import android.graphics.Color
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -24,12 +22,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
@@ -39,7 +36,6 @@ import com.clerk.api.Clerk
 import com.eivoid.app.BuildConfig
 import com.eivoid.app.navigation.VoidNavHost
 import com.eivoid.designsystem.component.VoidBackground
-import com.eivoid.designsystem.theme.VoidColors
 import com.eivoid.designsystem.theme.VoidTheme
 import com.eivoid.feature.auth.EiLoginScreen
 import com.eivoid.feature.settings.SettingsViewModel
@@ -68,19 +64,26 @@ fun VoidRoot() {
         ThemeMode.DARK -> true
     }
 
-    // A forced in-app theme must also drive the system bars: MIUI keeps a
-    // light navigation bar while the system itself is in light mode.
-    val view = LocalView.current
-    if (!view.isInEditMode) {
+    // The in-app theme also owns the system bars. Resolve the host Activity
+    // through ContextWrapper: LocalView.context is often a theme wrapper, not
+    // the Activity itself, which is why the status icons could stay dark on a
+    // black assistant screen.
+    val context = LocalContext.current
+    val activity = remember(context) { context.findActivity() }
+    if (activity != null) {
         SideEffect {
-            val window = (view.context as? Activity)?.window ?: return@SideEffect
-            val controller = WindowCompat.getInsetsController(window, view)
+            val window = activity.window
+            val controller = WindowCompat.getInsetsController(window, window.decorView)
             controller.isAppearanceLightStatusBars = !darkTheme
             controller.isAppearanceLightNavigationBars = !darkTheme
-            setNavigationBarColor(
-                window,
-                (if (darkTheme) VoidColors.surfaceDark else VoidColors.surfaceLight).toArgb(),
-            )
+            @Suppress("DEPRECATION")
+            run {
+                window.statusBarColor = Color.TRANSPARENT
+                window.navigationBarColor = Color.TRANSPARENT
+            }
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                window.isNavigationBarContrastEnforced = false
+            }
         }
     }
 
@@ -100,7 +103,7 @@ private fun ClerkGate() {
         // missing configuration; a debug build opens the real shell so the
         // reminders UI can be exercised on a device without credentials.
         if (BuildConfig.DEBUG) {
-            SignedInShell(userName = "debug user", debugBypass = true)
+            SignedInShell(userName = "Local workspace")
         } else {
             EiLoginScreen(onLoggedIn = {}, showDebugSignIn = false)
         }
@@ -115,43 +118,23 @@ private fun ClerkGate() {
         user == null -> EiLoginScreen(onLoggedIn = {})
         else -> SignedInShell(
             userName = displayNameOf(user?.firstName, user?.lastName, user?.username),
-            debugBypass = false,
         )
     }
 }
 
 /**
- * The signed-in app, plus the two startup duties that belong to the shell:
- * asking for the notification permission once and showing a loud banner when
- * Clerk is bypassed in a debug build.
+ * The signed-in app and the one startup duty that belongs to the shell:
+ * asking for the notification permission once. There is deliberately no
+ * debug banner in the product surface; local previews are labelled inside
+ * Customize, not across the top of every screen.
  */
 @Composable
-private fun SignedInShell(userName: String, debugBypass: Boolean) {
-    Column(modifier = Modifier.fillMaxSize()) {
-        if (debugBypass) DebugBypassBanner()
+private fun SignedInShell(userName: String) {
+    Box(modifier = Modifier.fillMaxSize()) {
         NotificationPermissionRequest()
         VoidNavHost(
             userName = userName,
-            modifier = Modifier.weight(1f),
-        )
-    }
-}
-
-@Composable
-private fun DebugBypassBanner() {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(VoidColors.reminderAmber.copy(alpha = 0.22f))
-            .statusBarsPadding()
-            .padding(vertical = 5.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            text = "DEBUG BUILD · Clerk bypass active · reminders are local only",
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onBackground,
-            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxSize(),
         )
     }
 }
@@ -200,7 +183,8 @@ private fun displayNameOf(first: String?, last: String?, username: String?): Str
     return full.ifBlank { username?.trim().orEmpty() }.ifBlank { "there" }
 }
 
-@Suppress("DEPRECATION")
-private fun setNavigationBarColor(window: Window, color: Int) {
-    window.navigationBarColor = color
+private tailrec fun Context.findActivity(): Activity? = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.findActivity()
+    else -> null
 }

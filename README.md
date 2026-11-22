@@ -8,7 +8,9 @@
 
 Ei Void is one Android app built around a quiet, black-canvas assistant:
 
-- **Assistant** — an AI-first home with a slide-out drawer, prompt chips, a floating ask bar and a conversation view. It uses the user's own AI provider keys.
+- **Assistant** — an AI-first home with a branded header, real capability cards,
+  workspace shortcuts, a slide-out drawer and a floating composer. It uses the
+  user's own AI provider keys.
 - **Library** — local-first bill, renewal and one-time payment reminders with exact Android alarms, Mark Paid / Snooze, optional email and Discord delivery.
 - **Projects** — a native Android AI coding agent that clones a GitHub repository, edits it through guarded tools, and commits/pushes the result.
 - **Customize** — one place for Ei Void identity, model tiers, provider keys, and the Ei Snore Discord notification connection.
@@ -42,13 +44,18 @@ docs/
 
 The UI is deliberately one system, not a restyled template:
 
-- Pure black OLED canvas, charcoal surfaces, 1px hairline borders, white type,
-  muted gray secondary text and a single electric-blue action accent.
-- One shared component kit (`designsystem/component/EiComponents.kt`):
-  `EiScreen`, `EiTopBar`, `EiCard`, `EiListRow`, `EiPill`, `EiSegmented`,
-  `EiTextField`, `EiPrimaryButton`, `EiNotice`, `EiEmptyState`, `EiStat`.
-- A slide-out drawer replaces the old bottom navigation. Chat, Images, Library,
-  Customize, Projects, Remote and Explore are drawer destinations.
+- Pure black OLED canvas, charcoal surfaces, hairline borders, white type,
+  muted grey secondary text and one electric-blue action accent.
+- Bundled **Inter** (OFL) across the product, with a restrained 4/8dp spacing
+  rhythm and consistent 1.6dp line icons — no emoji used as interface icons.
+- A branded header and drawer built around the chalk-cat mark, plus a persistent
+  `EiComponents` kit (`designsystem/component/EiComponents.kt`) for the rest of
+  the app.
+- The assistant home is a real product surface: greeting, four capability
+  cards, a workspace card for reminders/projects, a privacy note and a floating
+  composer. There is no debug ribbon or placeholder chrome.
+- A single slide-out drawer replaces bottom navigation: Chat, Library,
+  Projects, Remote, Customize and Usage.
 - Screens are designed from scratch: assistant home, library, reminder editor,
   projects, customize, usage, remote, explore, login, and the files/chat
   workspace shell.
@@ -161,6 +168,8 @@ cd android
 - [x] Emulator walkthrough: add → alarm → notification → Mark paid; new UI screens
 - [x] Redmi 10 Prime: redesigned APK installed, security scan passed, launched
 - [x] Assistant home tuned for landscape and side navigation-bar safe areas
+- [x] Production UI pass: Inter, branded header/drawer, capability cards,
+      workspace shortcuts, unified vector icons and no debug ribbon
 - [ ] App-to-dashboard usage sync (API and device keys are ready)
 - [ ] Real Clerk/Discord/Postgres credentials and a Render deployment
 - [x] Discord OAuth link in Customize, backend verification, disconnect and test DM

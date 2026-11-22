@@ -77,16 +77,20 @@ object VoidColors {
     // matching the phone-first assistant layout. These are separate tokens so
     // the reminders and code screens keep their existing palette untouched.
     val oledBlack = Color(0xFF000000)
-    val oledCharcoal = Color(0xFF121214)
-    val oledSurface = Color(0xFF1A1A1D)
-    val oledSurfaceHigh = Color(0xFF232327)
-    val oledBorder = Color(0xFF2E2E33)
-    val oledTextPrimary = Color(0xFFFFFFFF)
-    val oledTextSecondary = Color(0xFF9C9CA3)
-    val oledAccentBlue = Color(0xFF2F6BFF)
-    val oledAccentAmber = Color(0xFFE7B35A)
-    val oledSuccess = Color(0xFF7FBF9A)
-    val oledDanger = Color(0xFFFF8A8A)
+    val oledCharcoal = Color(0xFF0B0B0E)
+    val oledSurfaceLow = Color(0xFF0F0F12)
+    val oledSurface = Color(0xFF151518)
+    val oledSurfaceHigh = Color(0xFF1C1C21)
+    val oledBorder = Color(0xFF26262C)
+    val oledBorderSubtle = Color(0xFF1B1B20)
+    val oledTextPrimary = Color(0xFFF5F5F7)
+    val oledTextSecondary = Color(0xFFA7A7B0)
+    val oledTextTertiary = Color(0xFF6E6E78)
+    val oledAccentBlue = Color(0xFF3B82F6)
+    val oledAccentAmber = Color(0xFFF5B851)
+    val oledSuccess = Color(0xFF4ADE80)
+    val oledWarning = Color(0xFFFBBF24)
+    val oledDanger = Color(0xFFF87171)
 
     // Tier markers, brightest to dimmest: chalk, graphite, stone.
     val tierRed = chalk
