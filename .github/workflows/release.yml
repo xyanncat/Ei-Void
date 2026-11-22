@@ -21,7 +21,7 @@ jobs:
           distribution: temurin
           java-version: "21"
 
-      - uses: android-actions/setup-android@v3
+      - uses: android-actions/setup-android@v4
 
       - name: Configure SDK location
         run: echo "sdk.dir=$ANDROID_HOME" > android/local.properties

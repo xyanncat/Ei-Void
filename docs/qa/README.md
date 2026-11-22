@@ -5,7 +5,7 @@
 | Device | API | Status |
 |---|---|---|
 | Android emulator `void35` | 35 | Final redesigned APK installed and walked through |
-| Redmi 10 Prime (`005302500508`) | 33 | Final redesigned APK installed and launched |
+| Redmi 10 Prime (`005302500508`) | 33 | Discord wiring build installed; landscape assistant and Discord config path verified |
 
 ## New UI walkthrough (2026-11-22)
 
@@ -45,21 +45,29 @@ Verified on the Redmi:
 - The previous reminder flow still works on the device (exact alarm and
   notification were verified in the prior build; the reminder database survived
   the update).
+- The Discord wiring build installed with `adb install -r` and the assistant
+  home was checked in landscape: the header and incognito action respect the
+  side navigation bar, both chip rows fit, and “Pick a task” stays above the
+  slim ask bar.
+- Customize → Ei Snore → Discord notifications → Connect shows the explicit
+  “Discord is not configured in this build” notice on the Redmi instead of
+  failing silently.
 
 Evidence screenshots: `v2-home2.png`, `new-drawer.png`, `v2-library-saved.png`,
 `v2-editor-filled.png`, `v2-projects.png`, `v2-customize.png`, `v2-usage.png`,
-`redmi-v2-home.png`, `redmi-notif.png`.
+`redmi-v2-home.png`, `redmi-notif.png`, `redmi-discord-2-landscape.png`,
+`redmi-discord-5-snore.png`, `redmi-discord-6-result.png`.
 
 ## Installing on this Redmi
 
-MIUI 14 rejects `adb install` with `INSTALL_FAILED_USER_RESTRICTED`. The reliable
-path is:
+With **Install via USB** and **USB debugging (Security settings)** enabled,
+`adb install -r` succeeded for the Discord build on 2026-11-22. If MIUI still
+rejects it with `INSTALL_FAILED_USER_RESTRICTED`, use the package installer:
 
 1. `adb push app-debug.apk /sdcard/Download/EiVoid.apk`.
 2. Open the Files app → Download → the APK.
 3. Choose **Package installer** → **Update**.
-4. Let Play Protect/Xiaomi Security scan it; the final build passed with no
-   risks.
+4. Let Play Protect/Xiaomi Security scan it; the build passed with no risks.
 
 Do not disable Play Protect or package verification to force an install.
 
@@ -79,9 +87,10 @@ Customize now launches a real Discord OAuth2 PKCE flow:
 Local verification is limited because `android/local.properties` has no
 `discord.clientId` or `ei-void.apiUrl`. With those empty, Connect returns a clear
 configuration message instead of pretending to link — verified on the emulator
-(2026-11-22, `discord-connect-6-result.png`). Unit tests cover the client
-request/response and error mapping; the full OAuth round-trip needs a registered
-Discord application and a deployed Ei Void web service.
+(`discord-connect-6-result.png`) and the Redmi (`redmi-discord-6-result.png`),
+2026-11-22. Unit tests cover the client request/response and error mapping; the
+full OAuth round-trip needs a registered Discord application and a deployed Ei
+Void web service.
 
 - [ ] Connect a Discord account in the home guild.
 - [ ] Reject an account that is not in the home guild.

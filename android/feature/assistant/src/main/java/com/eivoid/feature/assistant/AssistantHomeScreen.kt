@@ -13,20 +13,25 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -63,6 +68,7 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
@@ -95,6 +101,9 @@ fun AssistantHomeScreen(
         modifier = modifier
             .fillMaxSize()
             .background(VoidColors.oledBlack)
+            .windowInsetsPadding(
+                WindowInsets.navigationBars.only(WindowInsetsSides.Horizontal),
+            )
             .imePadding(),
     ) {
         AssistantTopBar(
@@ -138,7 +147,9 @@ fun AssistantHomeScreen(
             onOpenSettings = onOpenSettings,
             onDictate = onDictate,
             onVoiceMode = onVoiceMode,
-            modifier = Modifier.navigationBarsPadding(),
+            modifier = Modifier.windowInsetsPadding(
+                WindowInsets.navigationBars.only(WindowInsetsSides.Bottom),
+            ),
         )
     }
 
@@ -298,47 +309,65 @@ private fun AssistantEmptyState(
     onPickTask: (String) -> Unit,
     onOpenTaskPicker: () -> Unit,
 ) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 12.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally,
+    // In landscape the assistant canvas is only ~400dp tall. Shrink the
+    // headline and spacing so both chip rows and "Pick a task" are visible
+    // without scrolling; portrait keeps the full-size composition.
+    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+        val compact = maxHeight < 420.dp
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 12.dp),
+            // In a short landscape viewport, center alignment pushes the
+            // bottom of the composition behind the ask bar. Start at the top
+            // instead so both rows and "Pick a task" remain reachable.
+            contentAlignment = if (compact) Alignment.TopCenter else Alignment.Center,
         ) {
-            Text(
-                text = "Put Ei Void to work",
-                style = MaterialTheme.typography.displaySmall,
-                fontWeight = FontWeight.Bold,
-                color = VoidColors.oledTextPrimary,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(horizontal = 20.dp),
-            )
-            Spacer(Modifier.height(22.dp))
-
-            TASK_ROWS.forEach { row ->
-                SuggestionRow(tasks = row, onPick = onPickTask)
-                Spacer(Modifier.height(6.dp))
-            }
-
-            Spacer(Modifier.height(14.dp))
-            Box(
+            Column(
                 modifier = Modifier
-                    .clip(RoundedCornerShape(50))
-                    .background(VoidColors.oledBlack)
-                    .border(1.dp, VoidColors.oledBorder, RoundedCornerShape(50))
-                    .clickable(onClick = onOpenTaskPicker)
-                    .padding(horizontal = 22.dp, vertical = 12.dp),
+                    .fillMaxWidth()
+                    .padding(top = if (compact) 8.dp else 0.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Text(
-                    text = "Pick a task",
-                    style = MaterialTheme.typography.labelLarge,
+                    text = "Put Ei Void to work",
+                    style = if (compact) {
+                        MaterialTheme.typography.headlineSmall
+                    } else {
+                        MaterialTheme.typography.displaySmall
+                    },
                     fontWeight = FontWeight.Bold,
                     color = VoidColors.oledTextPrimary,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(horizontal = 20.dp),
                 )
+                Spacer(Modifier.height(if (compact) 4.dp else 22.dp))
+
+                TASK_ROWS.forEach { row ->
+                    SuggestionRow(tasks = row, onPick = onPickTask, compact = compact)
+                    Spacer(Modifier.height(if (compact) 1.dp else 6.dp))
+                }
+
+                Spacer(Modifier.height(if (compact) 3.dp else 14.dp))
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(50))
+                        .background(VoidColors.oledBlack)
+                        .border(1.dp, VoidColors.oledBorder, RoundedCornerShape(50))
+                        .clickable(onClick = onOpenTaskPicker)
+                        .padding(
+                            horizontal = 22.dp,
+                            vertical = if (compact) 8.dp else 12.dp,
+                        ),
+                ) {
+                    Text(
+                        text = "Pick a task",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = VoidColors.oledTextPrimary,
+                    )
+                }
             }
         }
     }
@@ -352,6 +381,7 @@ private fun AssistantEmptyState(
 private fun SuggestionRow(
     tasks: List<AssistantTask>,
     onPick: (String) -> Unit,
+    compact: Boolean = false,
 ) {
     Box(modifier = Modifier.fillMaxWidth()) {
         Row(
@@ -363,7 +393,11 @@ private fun SuggestionRow(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             tasks.forEach { task ->
-                SuggestionChip(task = task, onClick = { onPick(task.label) })
+                SuggestionChip(
+                    task = task,
+                    onClick = { onPick(task.label) },
+                    compact = compact,
+                )
             }
         }
 
@@ -390,18 +424,25 @@ private fun SuggestionRow(
 }
 
 @Composable
-private fun SuggestionChip(task: AssistantTask, onClick: () -> Unit) {
+private fun SuggestionChip(
+    task: AssistantTask,
+    onClick: () -> Unit,
+    compact: Boolean = false,
+) {
     Row(
         modifier = Modifier
             .clip(RoundedCornerShape(50))
             .background(VoidColors.oledSurface)
             .border(1.dp, VoidColors.oledBorder, RoundedCornerShape(50))
             .clickable(onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 10.dp),
+            .padding(
+                horizontal = if (compact) 12.dp else 14.dp,
+                vertical = if (compact) 4.dp else 10.dp,
+            ),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(text = task.emoji, fontSize = 15.sp)
-        Spacer(Modifier.width(8.dp))
+        Text(text = task.emoji, fontSize = if (compact) 13.sp else 15.sp)
+        Spacer(Modifier.width(if (compact) 6.dp else 8.dp))
         Text(
             text = task.label,
             style = MaterialTheme.typography.labelLarge,
@@ -576,11 +617,15 @@ private fun AssistantInputBar(
     modifier: Modifier = Modifier,
 ) {
     var menuOpen by remember { mutableStateOf(false) }
+    // Keep the ask bar slim in a short landscape viewport so it does not
+    // cover the "Pick a task" action.
+    val compact = LocalConfiguration.current.screenHeightDp < 420
+    val controlSize = if (compact) 36.dp else 40.dp
 
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 8.dp),
+            .padding(horizontal = 12.dp, vertical = if (compact) 3.dp else 8.dp),
     ) {
         Surface(
             modifier = Modifier.fillMaxWidth(),
@@ -591,13 +636,16 @@ private fun AssistantInputBar(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 6.dp, vertical = 6.dp),
+                    .padding(
+                        horizontal = 6.dp,
+                        vertical = if (compact) 3.dp else 6.dp,
+                    ),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Box {
                     Box(
                         modifier = Modifier
-                            .size(40.dp)
+                            .size(controlSize)
                             .clip(CircleShape)
                             .clickable(onClickLabel = "Add", onClick = { menuOpen = true }),
                         contentAlignment = Alignment.Center,
@@ -667,7 +715,7 @@ private fun AssistantInputBar(
 
                 Box(
                     modifier = Modifier
-                        .size(40.dp)
+                        .size(controlSize)
                         .clip(CircleShape)
                         .clickable(onClickLabel = "Dictate", onClick = onDictate),
                     contentAlignment = Alignment.Center,
@@ -678,7 +726,7 @@ private fun AssistantInputBar(
                 val hasInput = value.isNotBlank()
                 Box(
                     modifier = Modifier
-                        .size(44.dp)
+                        .size(if (compact) 40.dp else 44.dp)
                         .clip(CircleShape)
                         .background(VoidColors.oledAccentBlue)
                         .clickable(

@@ -159,16 +159,18 @@ cd android
 - [x] Unified Discord bot (62 tests)
 - [x] Unified website, dashboard, link flow and app API (41 tests)
 - [x] Emulator walkthrough: add → alarm → notification → Mark paid; new UI screens
-- [x] Redmi 10 Prime: final redesigned APK installed, security scan passed, launched
+- [x] Redmi 10 Prime: redesigned APK installed, security scan passed, launched
+- [x] Assistant home tuned for landscape and side navigation-bar safe areas
 - [ ] App-to-dashboard usage sync (API and device keys are ready)
 - [ ] Real Clerk/Discord/Postgres credentials and a Render deployment
 - [x] Discord OAuth link in Customize, backend verification, disconnect and test DM
 - [ ] End-to-end Discord linking (needs a Discord application id and a deployed API URL)
 - [ ] Signed release APK
 
-Note: MIUI 14 still rejects `adb install` with `INSTALL_FAILED_USER_RESTRICTED` on
-this Redmi even with the two developer toggles on. The working install path is
-the phone's Files/package installer; the final build passed Xiaomi's security
-scan. See `docs/qa/README.md`.
+Note: with **Install via USB** and **USB debugging (Security settings)** enabled,
+`adb install -r` succeeded on this Redmi for the Discord build (2026-11-22). If
+MIUI still rejects it with `INSTALL_FAILED_USER_RESTRICTED`, the working path is
+the phone's Files/package installer; the build passed Xiaomi's security scan.
+See `docs/qa/README.md`.
 
 See `docs/superpowers/plans/2026-11-21-ei-void-unification.md` for the full task list and `docs/qa/README.md` for the device checklist.

@@ -126,7 +126,7 @@ class DiscordAuthActivity : ComponentActivity() {
     }
 
     private fun handleRedirect(url: String): Boolean {
-        if (handled || !url.startsWith(redirectUri)) return false
+        if (handled || !isRedirect(url)) return false
         handled = true
 
         val uri = Uri.parse(url)
@@ -162,6 +162,20 @@ class DiscordAuthActivity : ComponentActivity() {
                 }
         }
         return true
+    }
+
+    /**
+     * Match scheme, host, port and path exactly. A prefix check would also
+     * accept `https://host/discord-callback.evil.example`, which is not the
+     * registered redirect.
+     */
+    private fun isRedirect(url: String): Boolean {
+        val incoming = Uri.parse(url)
+        val expected = Uri.parse(redirectUri)
+        return incoming.scheme == expected.scheme &&
+            incoming.host == expected.host &&
+            incoming.port == expected.port &&
+            incoming.path == expected.path
     }
 
     private fun exchangeCode(code: String): DiscordIdentity {
