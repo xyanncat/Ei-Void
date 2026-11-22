@@ -36,6 +36,9 @@ Verified on the emulator:
   to the same OLED components.
 - **Reminder flow**: added “New UI Test / Test / ₹10”; the row persisted, the
   exact alarm fired, and Mark paid moved it to 0 upcoming · 1 paid.
+- **Release artifact**: `EiVoid-v0.2.0-debug.apk` downloaded from the GitHub
+  release, verified as `com.eivoid.app` 0.2.0 / arm64 / Android 13+, installed
+  on the emulator and launched (`release-v0.2.0-emulator.png`).
 
 Verified on the Redmi:
 
@@ -56,7 +59,8 @@ Verified on the Redmi:
 Evidence screenshots: `v2-home2.png`, `new-drawer.png`, `v2-library-saved.png`,
 `v2-editor-filled.png`, `v2-projects.png`, `v2-customize.png`, `v2-usage.png`,
 `redmi-v2-home.png`, `redmi-notif.png`, `redmi-discord-2-landscape.png`,
-`redmi-discord-5-snore.png`, `redmi-discord-6-result.png`.
+`redmi-discord-5-snore.png`, `redmi-discord-6-result.png`,
+`release-v0.2.0-emulator.png`.
 
 ## Installing on this Redmi
 
