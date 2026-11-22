@@ -5,7 +5,7 @@
 | Device | API | Status |
 |---|---|---|
 | Android emulator `void35` | 35 | Discord wiring build installed; assistant and Discord config path walked through |
-| Redmi 10 Prime (`005302500508`) | 33 | Discord wiring build installed; landscape assistant and Discord config path verified |
+| Redmi 10 Prime (`005302500508`) | 33 | v0.2.0 release APK installed; landscape, Discord config path and restored reminders verified |
 
 ## New UI walkthrough (2026-11-22)
 
@@ -55,12 +55,17 @@ Verified on the Redmi:
 - Customize → Ei Snore → Discord notifications → Connect shows the explicit
   “Discord is not configured in this build” notice on the Redmi instead of
   failing silently.
+- The published `EiVoid-v0.2.0-debug.apk` was installed through the package
+  installer after Play Protect scanned it as safe. The reminder database and
+  DataStore settings were backed up with `run-as`, the old debug install was
+  replaced, and the data was restored; Library still shows the prior paid
+  reminder. Keystore-backed provider keys were not restored.
 
 Evidence screenshots: `v2-home2.png`, `new-drawer.png`, `v2-library-saved.png`,
 `v2-editor-filled.png`, `v2-projects.png`, `v2-customize.png`, `v2-usage.png`,
 `redmi-v2-home.png`, `redmi-notif.png`, `redmi-discord-2-landscape.png`,
 `redmi-discord-5-snore.png`, `redmi-discord-6-result.png`,
-`release-v0.2.0-emulator.png`.
+`release-v0.2.0-emulator.png`, `redmi-release-v0.2.0.png`.
 
 ## Installing on this Redmi
 
