@@ -1,8 +1,10 @@
 package com.eivoid.feature.settings
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.eivoid.core.ai.Tier
 import com.eivoid.core.ai.plan.Plan
+import com.eivoid.core.reminders.DiscordLinkService
 import com.eivoid.core.security.SecretStore
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -10,6 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 data class ProviderInfo(
     val id: String,
@@ -17,12 +20,10 @@ data class ProviderInfo(
     val note: String,
 )
 
-/**
- * The Discord connection is stubbed in this build. The UI is present so the
- * settings surface is complete; wiring the OAuth exchange is a follow-up.
- */
+/** The Ei Snore Discord notification connection shown in Customize. */
 data class DiscordUiState(
     val linked: Boolean = false,
+    val username: String = "",
     val busy: Boolean = false,
     val message: String = "",
 )
@@ -32,6 +33,7 @@ class SettingsViewModel @Inject constructor(
     private val secretStore: SecretStore,
     private val settingsStore: SettingsStore,
     private val sessionCleaner: SessionCleaner,
+    private val discordLinkService: DiscordLinkService,
 ) : ViewModel() {
 
     val theme: StateFlow<ThemeMode> = settingsStore.theme
@@ -65,44 +67,108 @@ class SettingsViewModel @Inject constructor(
     }
 
     /**
-     * TODO(discord-oauth): Replace this stub with the full flow:
-     * 1. Launch a Discord OAuth screen from a dedicated Activity (not a WebView
-     *    embedded in this composable), with the client id from the build config.
-     * 2. Exchange the returned access token with the backend, which stores the
-     *    Discord user id against the Clerk account.
-     * 3. Refresh [DiscordUiState] from that link instead of local state.
-     *
-     * The UI and state plumbing are intentionally finished here so the rest of
-     * the settings screen compiles and behaves predictably without a secret.
+     * The OAuth Activity has already produced a Discord access token. The
+     * backend verifies it, checks guild membership, and stores the link.
      */
-    fun connectDiscord() {
-        _discord.update {
-            it.copy(
-                busy = false,
-                message = "Discord OAuth is not wired in this build yet. " +
-                    "The connect flow is a planned integration.",
+    fun connectDiscord(accessToken: String) {
+        if (accessToken.isBlank()) {
+            _discord.update {
+                it.copy(busy = false, message = "Discord did not return an access token.")
+            }
+            return
+        }
+        _discord.update { it.copy(busy = true, message = "") }
+        viewModelScope.launch {
+            discordLinkService.link(accessToken).fold(
+                onSuccess = { identity ->
+                    _discord.update {
+                        it.copy(
+                            linked = true,
+                            username = identity.username,
+                            busy = false,
+                            message = "Discord notifications linked.",
+                        )
+                    }
+                },
+                onFailure = { error ->
+                    _discord.update {
+                        it.copy(
+                            busy = false,
+                            message = error.message ?: "Discord linking failed.",
+                        )
+                    }
+                },
             )
         }
     }
 
-    fun disconnectDiscord() {
+    fun onDiscordAuthError(message: String) {
         _discord.update {
-            it.copy(
-                linked = false,
-                busy = false,
-                message = "Discord disconnected.",
+            it.copy(busy = false, message = message.ifBlank { "Discord linking was cancelled." })
+        }
+    }
+
+    /** Reloads the link from the backend; a missing Clerk session is silent. */
+    fun refreshDiscord() {
+        viewModelScope.launch {
+            discordLinkService.account().onSuccess { account ->
+                _discord.update {
+                    it.copy(
+                        linked = account.discord != null,
+                        username = account.discord?.username.orEmpty(),
+                        busy = false,
+                    )
+                }
+            }
+        }
+    }
+
+    fun disconnectDiscord() {
+        _discord.update { it.copy(busy = true, message = "") }
+        viewModelScope.launch {
+            discordLinkService.unlink().fold(
+                onSuccess = {
+                    _discord.update {
+                        it.copy(
+                            linked = false,
+                            username = "",
+                            busy = false,
+                            message = "Discord notifications disconnected.",
+                        )
+                    }
+                },
+                onFailure = { error ->
+                    _discord.update {
+                        it.copy(
+                            busy = false,
+                            message = error.message ?: "Could not disconnect Discord.",
+                        )
+                    }
+                },
             )
         }
     }
 
     fun testDiscord() {
-        _discord.update {
-            it.copy(
-                busy = false,
-                message = if (it.linked) {
-                    "Discord test delivery is not wired in this build yet."
-                } else {
-                    "Connect Discord first to send a test message."
+        if (!_discord.value.linked) {
+            _discord.update { it.copy(message = "Connect Discord first to send a test message.") }
+            return
+        }
+        _discord.update { it.copy(busy = true, message = "") }
+        viewModelScope.launch {
+            discordLinkService.test().fold(
+                onSuccess = {
+                    _discord.update {
+                        it.copy(busy = false, message = "Test Discord message sent.")
+                    }
+                },
+                onFailure = { error ->
+                    _discord.update {
+                        it.copy(
+                            busy = false,
+                            message = error.message ?: "Discord test failed.",
+                        )
+                    }
                 },
             )
         }
@@ -118,6 +184,7 @@ class SettingsViewModel @Inject constructor(
      */
     fun signOut() {
         sessionCleaner.clear()
+        _discord.value = DiscordUiState()
     }
 
     companion object {

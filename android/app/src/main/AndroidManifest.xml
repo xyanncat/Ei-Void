@@ -31,6 +31,12 @@
             </intent-filter>
         </activity>
 
+        <!-- Discord OAuth is launched only from Customize, never as app login. -->
+        <activity
+            android:name="com.eivoid.feature.settings.DiscordAuthActivity"
+            android:exported="false"
+            android:theme="@style/Theme.EiVoid.Discord" />
+
         <!--
             Reminder receivers are also declared by :core:reminders. They are
             repeated here so the app manifest is the one-stop contract for the

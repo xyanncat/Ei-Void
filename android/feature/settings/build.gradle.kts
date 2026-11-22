@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
@@ -6,12 +8,30 @@ plugins {
     alias(libs.plugins.hilt)
 }
 
+// Discord OAuth is configuration, never a secret. The client id is the public
+// application id; the redirect URI is derived from the Ei Void web service.
+val localProperties = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) file.inputStream().use { load(it) }
+}
+val discordClientId: String =
+    localProperties.getProperty("discord.clientId")
+        ?: System.getenv("DISCORD_CLIENT_ID")
+        ?: ""
+val eiVoidApiUrl: String =
+    localProperties.getProperty("ei-void.apiUrl")
+        ?: localProperties.getProperty("void.backendUrl")
+        ?: System.getenv("EI_VOID_API_URL")
+        ?: ""
+
 android {
     namespace = "com.eivoid.feature.settings"
     compileSdk = 37
 
     defaultConfig {
         minSdk = 33
+        buildConfigField("String", "DISCORD_CLIENT_ID", "\"$discordClientId\"")
+        buildConfigField("String", "EI_VOID_API_URL", "\"$eiVoidApiUrl\"")
     }
 
     compileOptions {
@@ -20,6 +40,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     lint {
         // The experimental opt-in detector intermittently crashes the lint
@@ -39,6 +60,7 @@ dependencies {
     implementation(project(":designsystem"))
 
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)

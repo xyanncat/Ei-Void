@@ -95,8 +95,14 @@ class NotificationHelper(private val context: Context) {
             .addAction(0, "Snooze 1 day", snooze)
         if (contentIntent != null) builder.setContentIntent(contentIntent)
 
-        return runCatching { manager.notify(notificationId(reminder.id), builder.build()) }
-            .isSuccess
+        return try {
+            manager.notify(notificationId(reminder.id), builder.build())
+            true
+        } catch (_: SecurityException) {
+            // The user can revoke POST_NOTIFICATIONS between canNotify() and
+            // this call. Treat that race as "not delivered", not a crash.
+            false
+        }
     }
 
     fun cancelReminder(reminderId: Long) {

@@ -28,6 +28,10 @@ abstract class ReminderModule {
     @Singleton
     abstract fun bindReminderRepository(impl: DefaultReminderRepository): ReminderRepository
 
+    @Binds
+    @Singleton
+    abstract fun bindDiscordLinkService(impl: DiscordLinkClient): DiscordLinkService
+
     companion object {
 
         @Provides
@@ -54,6 +58,11 @@ abstract class ReminderModule {
         @Singleton
         fun provideReminderSyncTransport(httpClient: HttpClient): ReminderSyncTransport =
             ReminderSyncTransport(httpClient, BuildConfig.EI_VOID_API_URL)
+
+        @Provides
+        @Singleton
+        fun provideDiscordLinkClient(httpClient: HttpClient): DiscordLinkClient =
+            DiscordLinkClient(httpClient, BuildConfig.EI_VOID_API_URL)
 
         @Provides
         @Singleton

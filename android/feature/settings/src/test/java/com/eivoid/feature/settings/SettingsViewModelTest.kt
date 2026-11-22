@@ -10,6 +10,9 @@ import com.eivoid.core.database.TierUsage
 import com.eivoid.core.database.UsageDao
 import com.eivoid.core.database.UsageEntryEntity
 import com.eivoid.core.ai.Tier
+import com.eivoid.core.reminders.DiscordIdentity
+import com.eivoid.core.reminders.DiscordLinkService
+import com.eivoid.core.reminders.EiVoidAccount
 import com.eivoid.core.security.SecretStore
 import com.eivoid.core.workspace.WorkspaceManager
 import java.io.File
@@ -107,7 +110,7 @@ class SettingsViewModelTest {
             NoSignOutHook,
             CoroutineScope(Dispatchers.Unconfined),
         )
-        val vm = SettingsViewModel(secrets, FakeSettingsStore(), cleaner)
+        val vm = SettingsViewModel(secrets, FakeSettingsStore(), cleaner, NoDiscordLinkService)
         dao.insertAll(listOf(entity()))
         File(workspaces, "owner/repo").mkdirs()
 
@@ -131,7 +134,21 @@ class SettingsViewModelTest {
             NoSignOutHook,
             CoroutineScope(Dispatchers.Unconfined),
         )
-        return SettingsViewModel(secrets, store, cleaner)
+        return SettingsViewModel(secrets, store, cleaner, NoDiscordLinkService)
+    }
+
+    private object NoDiscordLinkService : DiscordLinkService {
+        override suspend fun link(accessToken: String): Result<DiscordIdentity> =
+            Result.failure(IllegalStateException("not configured"))
+
+        override suspend fun unlink(): Result<Unit> =
+            Result.failure(IllegalStateException("not configured"))
+
+        override suspend fun test(): Result<Unit> =
+            Result.failure(IllegalStateException("not configured"))
+
+        override suspend fun account(): Result<EiVoidAccount> =
+            Result.failure(IllegalStateException("not configured"))
     }
 
     private fun entity() = RepoEntity(

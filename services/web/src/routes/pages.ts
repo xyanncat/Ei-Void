@@ -322,6 +322,22 @@ export function createPagesRouter({
     });
   });
 
+  router.get('/discord-callback', (req, res) => {
+    // The Android WebView intercepts this URL before it is fetched. The page
+    // exists so the redirect URI is a real HTTPS destination and so a browser
+    // that reaches it gets a clear next step.
+    res.set('Cache-Control', 'no-store');
+    res.render('discord-callback', {
+      page: meta(
+        'Discord linking',
+        'Return to the Ei Void app to finish linking Discord.',
+        '/discord-callback',
+        { noindex: true },
+      ),
+      code: typeof req.query.code === 'string' ? req.query.code : '',
+    });
+  });
+
   router.get('/docs', (_req, res) => {
     res.render('docs/index', {
       page: meta(

@@ -36,19 +36,27 @@ val clerkAccountPortalUrl: String =
         ?: ""
 
 // Release signing. The keystore lives outside the repository; point at it from
-// local.properties (see .void/keystore.properties next to the keystore) or
-// from the environment.
+// local.properties, from android/keystore.properties (what the release
+// workflow writes), or from the environment. Never commit any of these.
+val keystoreProperties = Properties().apply {
+    val file = rootProject.file("keystore.properties")
+    if (file.exists()) file.inputStream().use { load(it) }
+}
 val releaseKeystorePath: String? =
     localProperties.getProperty("release.keystorePath")
+        ?: keystoreProperties.getProperty("storeFile")
         ?: System.getenv("VOID_KEYSTORE_PATH")
 val releaseStorePassword: String? =
     localProperties.getProperty("release.keystorePassword")
+        ?: keystoreProperties.getProperty("storePassword")
         ?: System.getenv("VOID_KEYSTORE_PASSWORD")
 val releaseKeyAlias: String? =
     localProperties.getProperty("release.keyAlias")
+        ?: keystoreProperties.getProperty("keyAlias")
         ?: System.getenv("VOID_KEY_ALIAS")
 val releaseKeyPassword: String? =
     localProperties.getProperty("release.keyPassword")
+        ?: keystoreProperties.getProperty("keyPassword")
         ?: System.getenv("VOID_KEY_PASSWORD")
 
 val hasReleaseSigning =

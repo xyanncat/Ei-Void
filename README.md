@@ -75,9 +75,10 @@ sdk.dir=C\:\\Users\\you\\Android\\Sdk
 clerk.publishableKey=pk_test_...
 ei-void.apiUrl=https://your-web-service.onrender.com
 clerk.accountPortalUrl=https://your-clerk-instance.accounts.dev/user
+discord.clientId=your-discord-application-id
 ```
 
-Release signing comes from `keystore.properties` or the `RELEASE_*` environment variables; never commit a keystore.
+Release signing comes from `android/keystore.properties` or the `VOID_KEYSTORE_PATH`, `VOID_KEYSTORE_PASSWORD`, `VOID_KEY_ALIAS` and `VOID_KEY_PASSWORD` environment variables; never commit a keystore.
 
 ## Run the services
 
@@ -101,6 +102,31 @@ Both services share `DATABASE_URL`; the web service runs the idempotent migratio
 - `eivoid-db` — PostgreSQL 16
 
 Set the `sync: false` values in the Render dashboard. The only mandatory secret for the bot is `DISCORD_BOT_TOKEN`; the web service needs the Clerk keys, database URL and mail provider credentials.
+
+## Discord notifications (Ei Snore)
+
+Discord is linked from **Customize → EI SNORE → Discord notifications**. It is
+not the app login; Ei Void sign-in stays with Clerk.
+
+1. In the Discord Developer Portal, open the notification application and enable
+   **OAuth2 → Public Client**. Add this exact redirect URI:
+   `https://<your-ei-void-web-host>/discord-callback`.
+2. Put the public application id in `android/local.properties`:
+   ```properties
+   discord.clientId=your-discord-application-id
+   ei-void.apiUrl=https://your-ei-void-web-host
+   ```
+3. Put the bot token only in the bot worker environment. It must be the same
+   Discord application and the bot must be in `DISCORD_GUILD_ID`.
+4. In the app, open Customize → Discord notifications → Connect. The app opens
+   Discord, receives a PKCE access token, and sends it once to
+   `POST /api/v1/discord/link` with the Clerk session. The backend verifies the
+   token, checks guild membership, stores the Discord user id, and discards the
+   token.
+5. Use **Send test** to verify delivery. With DMs closed, the bot falls back to
+   the configured notification channel mention.
+
+The app never stores the Discord access token and never ships the bot token.
 
 ## Security
 
@@ -136,7 +162,8 @@ cd android
 - [x] Redmi 10 Prime: final redesigned APK installed, security scan passed, launched
 - [ ] App-to-dashboard usage sync (API and device keys are ready)
 - [ ] Real Clerk/Discord/Postgres credentials and a Render deployment
-- [ ] Discord OAuth link in Customize (the section and API are ready; app hop is a stub)
+- [x] Discord OAuth link in Customize, backend verification, disconnect and test DM
+- [ ] End-to-end Discord linking (needs a Discord application id and a deployed API URL)
 - [ ] Signed release APK
 
 Note: MIUI 14 still rejects `adb install` with `INSTALL_FAILED_USER_RESTRICTED` on

@@ -63,6 +63,32 @@ path is:
 
 Do not disable Play Protect or package verification to force an install.
 
+## Discord notification connection
+
+Customize now launches a real Discord OAuth2 PKCE flow:
+
+- `DiscordAuthActivity` opens Discord with scopes `identify guilds` and a
+  state/PKCE challenge, then returns the access token to Settings.
+- `SettingsViewModel` sends the token to `POST /api/v1/discord/link` with the
+  Clerk session; the backend verifies it, checks the home guild, and stores the
+  Discord id.
+- The linked username is shown in Customize; Disconnect calls
+  `DELETE /api/v1/discord/link`; Send test calls `POST /api/v1/test/discord`.
+- The access token is never persisted, and the bot token never reaches the app.
+
+Local verification is limited because `android/local.properties` has no
+`discord.clientId` or `ei-void.apiUrl`. With those empty, Connect returns a clear
+configuration message instead of pretending to link — verified on the emulator
+(2026-11-22, `discord-connect-6-result.png`). Unit tests cover the client
+request/response and error mapping; the full OAuth round-trip needs a registered
+Discord application and a deployed Ei Void web service.
+
+- [ ] Connect a Discord account in the home guild.
+- [ ] Reject an account that is not in the home guild.
+- [ ] Disconnect removes the link.
+- [ ] Send test delivers a DM when DMs are open.
+- [ ] Closed DMs fall back to the notification channel mention.
+
 ## Reminder checks
 
 - [x] Add a one-time reminder; notification fires.

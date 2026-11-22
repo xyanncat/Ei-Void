@@ -1,6 +1,7 @@
 package com.eivoid.feature.settings
 
 import android.Manifest
+import android.app.Activity
 import android.app.AlarmManager
 import android.content.Context
 import android.content.Intent
@@ -8,6 +9,8 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -43,6 +46,7 @@ import androidx.compose.material3.TimeInput
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -111,6 +115,28 @@ fun CustomizeScreen(
     var showProviderKeys by rememberSaveable { mutableStateOf(false) }
     var showSignOutDialog by rememberSaveable { mutableStateOf(false) }
     var showDeleteDialog by rememberSaveable { mutableStateOf(false) }
+    val context = LocalContext.current
+
+    val discordLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult(),
+    ) { result ->
+        val data = result.data
+        if (result.resultCode == Activity.RESULT_OK) {
+            val token = data?.getStringExtra(DiscordAuthActivity.EXTRA_ACCESS_TOKEN)
+            if (token.isNullOrBlank()) {
+                viewModel.onDiscordAuthError("Discord did not return an access token.")
+            } else {
+                viewModel.connectDiscord(token)
+            }
+        } else {
+            viewModel.onDiscordAuthError(
+                data?.getStringExtra(DiscordAuthActivity.EXTRA_ERROR)
+                    ?: "Discord linking was cancelled.",
+            )
+        }
+    }
+
+    LaunchedEffect(Unit) { viewModel.refreshDiscord() }
 
     if (showProviderKeys) {
         ProviderKeysScreen(
@@ -183,7 +209,11 @@ fun CustomizeScreen(
             item {
                 DiscordCard(
                     state = discord,
-                    onConnect = viewModel::connectDiscord,
+                    onConnect = {
+                        discordLauncher.launch(
+                            Intent(context, DiscordAuthActivity::class.java),
+                        )
+                    },
                     onDisconnect = viewModel::disconnectDiscord,
                     onTest = viewModel::testDiscord,
                     onDismiss = viewModel::dismissDiscordMessage,
@@ -641,14 +671,17 @@ private fun DiscordCard(
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "Discord",
+                    text = "Ei Snore · Discord notifications",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = VoidColors.oledTextPrimary,
                 )
                 Text(
-                    text = "Reminder DMs and channel fallbacks for Ei Snore. This is not " +
-                        "the app login.",
+                    text = if (linked && state.username.isNotBlank()) {
+                        "Linked as @${state.username}"
+                    } else {
+                        "Reminder DMs and channel fallbacks. This is not the app login."
+                    },
                     style = MaterialTheme.typography.bodySmall,
                     color = VoidColors.oledTextSecondary,
                 )
@@ -660,10 +693,21 @@ private fun DiscordCard(
             )
         }
 
-        Spacer(Modifier.height(12.dp))
-        EiNotice(
-            message = "Integration stub. Discord OAuth is not wired in this build yet.",
+        Spacer(Modifier.height(10.dp))
+        Text(
+            text = "Connect the Discord account that should receive reminder DMs. It must " +
+                "be a member of the Ei Void server. Ei Void sign-in stays with Clerk.",
+            style = MaterialTheme.typography.bodySmall,
+            color = VoidColors.oledTextSecondary,
         )
+        if (state.busy) {
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = "Talking to Discord…",
+                style = MaterialTheme.typography.labelMedium,
+                color = VoidColors.oledAccentBlue,
+            )
+        }
         Spacer(Modifier.height(12.dp))
 
         FlowRow(
