@@ -106,7 +106,6 @@ fun CustomizeScreen(
     viewModel: SettingsViewModel = hiltViewModel(),
     reminderPrefs: ReminderPreferencesViewModel = hiltViewModel(),
 ) {
-    val theme by viewModel.theme.collectAsStateWithLifecycle()
     val preferredTier by viewModel.preferredTier.collectAsStateWithLifecycle()
     val plan by viewModel.plan.collectAsStateWithLifecycle()
     val reminders by reminderPrefs.settings.collectAsStateWithLifecycle()
@@ -224,12 +223,7 @@ fun CustomizeScreen(
 
             item { EiSectionLabel("APP", Modifier.padding(top = 10.dp)) }
 
-            item {
-                AppearanceCard(
-                    selected = theme,
-                    onSelect = viewModel::setTheme,
-                )
-            }
+            item { AppearanceCard() }
 
             item { SignOutCard(onClick = { showSignOutDialog = true }) }
 
@@ -860,42 +854,28 @@ private fun openExactAlarmSettings(context: Context) {
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun AppearanceCard(selected: ThemeMode, onSelect: (ThemeMode) -> Unit) {
+private fun AppearanceCard() {
     EiCard {
-        Text(
-            text = "Appearance",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
-            color = VoidColors.oledTextPrimary,
-        )
-        Text(
-            text = "Follow the system, or pin the app to OLED black or paper.",
-            style = MaterialTheme.typography.bodySmall,
-            color = VoidColors.oledTextSecondary,
-        )
-        Spacer(Modifier.height(14.dp))
-
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            ThemeMode.entries.forEach { mode ->
-                EiPill(
-                    text = mode.label(),
-                    selected = selected == mode,
-                    onClick = { onSelect(mode) },
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "Appearance",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = VoidColors.oledTextPrimary,
+                )
+                Text(
+                    text = "The assistant, library and projects are tuned for " +
+                        "pure-black OLED in this release.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = VoidColors.oledTextSecondary,
                 )
             }
+            Spacer(Modifier.width(12.dp))
+            EiStatusPill(text = "OLED black", color = VoidColors.oledAccentBlue)
         }
     }
-}
-
-private fun ThemeMode.label(): String = when (this) {
-    ThemeMode.SYSTEM -> "System"
-    ThemeMode.LIGHT -> "Light"
-    ThemeMode.DARK -> "Dark"
 }
 
 @Composable

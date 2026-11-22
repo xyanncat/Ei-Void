@@ -8,7 +8,6 @@ import android.content.pm.PackageManager
 import android.graphics.Color
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,12 +24,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.clerk.api.Clerk
 import com.eivoid.app.BuildConfig
@@ -38,8 +35,6 @@ import com.eivoid.app.navigation.VoidNavHost
 import com.eivoid.designsystem.component.VoidBackground
 import com.eivoid.designsystem.theme.VoidTheme
 import com.eivoid.feature.auth.EiLoginScreen
-import com.eivoid.feature.settings.SettingsViewModel
-import com.eivoid.feature.settings.ThemeMode
 
 /**
  * Root theme wrapper and the Clerk gate.
@@ -55,27 +50,22 @@ import com.eivoid.feature.settings.ThemeMode
  */
 @Composable
 fun VoidRoot() {
-    val settings: SettingsViewModel = hiltViewModel()
-    val mode by settings.theme.collectAsStateWithLifecycle()
+    // This release is a single OLED surface by design. The assistant, library,
+    // projects and drawer are tuned for black, so the system chrome follows
+    // the product rather than the device's light/dark setting.
+    val darkTheme = true
 
-    val darkTheme = when (mode) {
-        ThemeMode.SYSTEM -> isSystemInDarkTheme()
-        ThemeMode.LIGHT -> false
-        ThemeMode.DARK -> true
-    }
-
-    // The in-app theme also owns the system bars. Resolve the host Activity
-    // through ContextWrapper: LocalView.context is often a theme wrapper, not
-    // the Activity itself, which is why the status icons could stay dark on a
-    // black assistant screen.
+    // Resolve the host Activity through ContextWrapper: LocalView.context is
+    // often a theme wrapper, not the Activity itself, which is why the status
+    // icons could stay dark on a black assistant screen.
     val context = LocalContext.current
     val activity = remember(context) { context.findActivity() }
     if (activity != null) {
         SideEffect {
             val window = activity.window
             val controller = WindowCompat.getInsetsController(window, window.decorView)
-            controller.isAppearanceLightStatusBars = !darkTheme
-            controller.isAppearanceLightNavigationBars = !darkTheme
+            controller.isAppearanceLightStatusBars = false
+            controller.isAppearanceLightNavigationBars = false
             @Suppress("DEPRECATION")
             run {
                 window.statusBarColor = Color.TRANSPARENT
