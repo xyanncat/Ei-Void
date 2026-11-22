@@ -46,8 +46,9 @@ The UI is deliberately one system, not a restyled template:
 
 - Pure black OLED canvas, charcoal surfaces, hairline borders, white type,
   muted grey secondary text and one electric-blue action accent.
-- Bundled **Inter** (OFL) across the product, with a restrained 4/8dp spacing
-  rhythm and consistent 1.6dp line icons — no emoji used as interface icons.
+- Bundled **Inter** (SIL Open Font License, `docs/licenses/Inter-OFL.txt`)
+  across the product, with a restrained 4/8dp spacing rhythm and consistent
+  line icons — no emoji used as interface icons.
 - A branded header and drawer built around the chalk-cat mark, plus a persistent
   `EiComponents` kit (`designsystem/component/EiComponents.kt`) for the rest of
   the app.
