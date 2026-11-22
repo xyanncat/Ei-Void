@@ -138,6 +138,14 @@ describe('public pages', () => {
     expect(response.headers['x-powered-by']).toBeUndefined();
   });
 
+  it('serves the Discord callback without caching or echoing the code', async () => {
+    const response = await request(h.app).get('/discord-callback?code=one-time-code');
+    expect(response.status).toBe(200);
+    expect(response.text).toContain('Return to');
+    expect(response.headers['cache-control']).toContain('no-store');
+    expect(response.text).not.toContain('one-time-code');
+  });
+
   it('serves every marketing, docs and legal page', async () => {
     const pages: ReadonlyArray<readonly [string, string]> = [
       ['/', 'Reminders'],
