@@ -4,7 +4,7 @@
 
 | Device | API | Status |
 |---|---|---|
-| Android emulator `void35` | 35 | Final redesigned APK installed and walked through |
+| Android emulator `void35` | 35 | Discord wiring build installed; assistant and Discord config path walked through |
 | Redmi 10 Prime (`005302500508`) | 33 | Discord wiring build installed; landscape assistant and Discord config path verified |
 
 ## New UI walkthrough (2026-11-22)
