@@ -7,10 +7,11 @@
 | Android emulator `void35` | 35 | Discord wiring build installed; assistant and Discord config path walked through |
 | Redmi 10 Prime (`005302500508`) | 33 | v0.2.0 release APK installed; landscape, Discord config path and restored reminders verified |
 
-## New UI walkthrough (2026-11-22)
+## First UI pass (2026-11-22)
 
 The old bottom-tab shell is gone. The app now opens on the AI assistant and
-uses a single slide-out drawer.
+uses a single slide-out drawer. The Production UI pass below supersedes the
+assistant home and drawer details in this first-pass walkthrough.
 
 Verified on the emulator:
 
