@@ -614,8 +614,9 @@ private fun AssistantMessageList(
     streaming: Boolean,
 ) {
     val listState = rememberLazyListState()
-    LaunchedEffect(messages.size) {
-        if (messages.isNotEmpty()) listState.animateScrollToItem(messages.lastIndex)
+    val lastMessage = messages.lastOrNull()
+    LaunchedEffect(messages.size, lastMessage?.text) {
+        if (messages.isNotEmpty()) listState.scrollToItem(messages.lastIndex)
     }
 
     LazyColumn(

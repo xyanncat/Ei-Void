@@ -85,7 +85,7 @@ object VoidColors {
     val oledBorderSubtle = Color(0xFF1B1B20)
     val oledTextPrimary = Color(0xFFF5F5F7)
     val oledTextSecondary = Color(0xFFA7A7B0)
-    val oledTextTertiary = Color(0xFF6E6E78)
+    val oledTextTertiary = Color(0xFF8A8A94)
     val oledAccentBlue = Color(0xFF3B82F6)
     val oledAccentAmber = Color(0xFFF5B851)
     val oledSuccess = Color(0xFF4ADE80)
